@@ -13,14 +13,14 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingHorizontal="16dp"
-        android:paddingTop="8dp">
+        android:paddingTop="6dp">
 
         <LinearLayout
             android:id="@+id/searchBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="12dp"
-            android:background="@drawable/bg_card_low"
+            android:background="@drawable/bg_progress_card"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:padding="10dp"
@@ -51,9 +51,11 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_card_low"
+            android:background="@drawable/bg_progress_card"
+            android:elevation="1dp"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="8dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -61,133 +63,41 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
+                <View
+                    android:layout_width="6dp"
+                    android:layout_height="6dp"
+                    android:background="@drawable/bg_dot_primary" />
+
                 <TextView
+                    android:id="@+id/tvProgressDesc"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:text="Tiến độ hôm nay"
-                    android:textColor="@color/on_surface"
-                    android:textSize="14sp"
+                    android:text="Hôm nay · 0/0"
+                    android:textColor="@color/slate_700"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/tvProgressPercent"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_fab"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="2dp"
                     android:text="0%"
-                    android:textColor="@color/white"
+                    android:textColor="@color/primary"
                     android:textSize="12sp"
                     android:textStyle="bold" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/tvProgressDesc"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textColor="@color/on_surface_variant"
-                android:textSize="12sp" />
 
             <ProgressBar
                 android:id="@+id/progressToday"
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
-                android:layout_height="10dp"
-                android:layout_marginTop="8dp"
+                android:layout_height="6dp"
+                android:layout_marginTop="6dp"
                 android:max="100"
                 android:progressDrawable="@drawable/progress_horizontal" />
         </LinearLayout>
-
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:scrollbars="none">
-
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipGroupCategory"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:selectionRequired="true"
-                app:singleSelection="true">
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipAll"
-                    style="@style/Widget.ToDoList.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:checked="true"
-                    android:text="Tất cả" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipWork"
-                    style="@style/Widget.ToDoList.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="💼 Công việc" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipPersonal"
-                    style="@style/Widget.ToDoList.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="👤 Cá nhân" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipStudy"
-                    style="@style/Widget.ToDoList.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="📚 Học tập" />
-
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipShopping"
-                    style="@style/Widget.ToDoList.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="🛒 Mua sắm" />
-            </com.google.android.material.chip.ChipGroup>
-        </HorizontalScrollView>
-
-        <com.google.android.material.button.MaterialButtonToggleGroup
-            android:id="@+id/statusToggle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            app:checkedButton="@id/btnStatusTodo"
-            app:selectionRequired="true"
-            app:singleSelection="true">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnStatusTodo"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Cần làm"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnStatusDoing"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Đang làm"
-                android:textSize="12sp" />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnStatusDone"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="Xong"
-                android:textSize="12sp" />
-        </com.google.android.material.button.MaterialButtonToggleGroup>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -196,32 +106,75 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tvListTitle"
+            <HorizontalScrollView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Danh sách cần làm"
-                android:textColor="@color/on_surface"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                android:scrollbars="none">
 
-            <TextView
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipGroupCategory"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:chipSpacingHorizontal="6dp"
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipAll"
+                        style="@style/Widget.ToDoList.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="Tất cả" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipWork"
+                        style="@style/Widget.ToDoList.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Công việc" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipPersonal"
+                        style="@style/Widget.ToDoList.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Cá nhân" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipStudy"
+                        style="@style/Widget.ToDoList.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Học tập" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipShopping"
+                        style="@style/Widget.ToDoList.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Mua sắm" />
+                </com.google.android.material.chip.ChipGroup>
+            </HorizontalScrollView>
+
+            <ImageButton
                 android:id="@+id/btnSort"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:padding="8dp"
-                android:text="Ưu tiên cao"
-                android:textColor="@color/primary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_sort_btn"
+                android:contentDescription="@string/sort_tasks"
+                android:padding="6dp"
+                android:scaleType="centerInside"
+                android:src="@drawable/ic_swap_vert" />
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvTasks"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:nestedScrollingEnabled="false"
             android:overScrollMode="never" />
 
@@ -229,7 +182,7 @@
             android:id="@+id/tvEmpty"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_card_white"
+            android:background="@drawable/bg_task_card"
             android:gravity="center"
             android:padding="32dp"
             android:text="Không có công việc nào trong mục này"

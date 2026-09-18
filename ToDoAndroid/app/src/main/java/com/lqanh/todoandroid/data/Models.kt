@@ -4,7 +4,7 @@ enum class TaskStatus { TODO, DOING, DONE }
 
 enum class PriorityLevel { CAO, TB, THAP }
 
-enum class NavigationTab { CONG_VIEC, LICH_TRINH, THONG_KE, CAI_DAT }
+enum class NavigationTab { CONG_VIEC, LICH_TRINH }
 
 data class Subtask(
     val id: String,

@@ -18,5 +18,11 @@
         <item name="chipBackgroundColor">@color/chip_bg</item>
         <item name="android:textColor">@color/chip_text</item>
         <item name="checkedIconVisible">false</item>
+        <item name="chipStrokeWidth">1dp</item>
+        <item name="chipStrokeColor">@color/chip_stroke</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipCornerRadius">999dp</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
     </style>
 </resources>

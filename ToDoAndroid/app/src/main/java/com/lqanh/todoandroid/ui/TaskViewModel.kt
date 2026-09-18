@@ -20,26 +20,19 @@ import kotlinx.coroutines.launch
 data class AppUiState(
     val tasks: List<Task> = emptyList(),
     val currentTab: NavigationTab = NavigationTab.CONG_VIEC,
-    val selectedTaskId: String? = null,
     val isCreatingTask: Boolean = false,
     val searchQuery: String = "",
     val isSearchOpen: Boolean = false,
     val hapticEnabled: Boolean = true
 ) {
-    val selectedTask: Task?
-        get() = tasks.find { it.id == selectedTaskId }
-
     val isChildScreen: Boolean
-        get() = isCreatingTask || selectedTaskId != null
+        get() = isCreatingTask
 
     val headerTitle: String
         get() = when {
             isCreatingTask -> "Tạo Công Việc Mới"
-            selectedTaskId != null -> "Chi Tiết Công Việc"
-            currentTab == NavigationTab.CONG_VIEC -> "Công Việc"
             currentTab == NavigationTab.LICH_TRINH -> "Lịch Trình"
-            currentTab == NavigationTab.THONG_KE -> "Thống Kê"
-            else -> "Cài Đặt"
+            else -> "Công Việc"
         }
 }
 
@@ -76,22 +69,17 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update {
             it.copy(
                 currentTab = tab,
-                selectedTaskId = null,
                 isCreatingTask = false
             )
         }
     }
 
     fun openCreate() {
-        _uiState.update { it.copy(isCreatingTask = true, selectedTaskId = null) }
+        _uiState.update { it.copy(isCreatingTask = true) }
     }
 
     fun closeChild() {
-        _uiState.update { it.copy(isCreatingTask = false, selectedTaskId = null) }
-    }
-
-    fun selectTask(taskId: String) {
-        _uiState.update { it.copy(selectedTaskId = taskId, isCreatingTask = false) }
+        _uiState.update { it.copy(isCreatingTask = false) }
     }
 
     fun toggleSearch() {
@@ -109,10 +97,6 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update {
             it.copy(isSearchOpen = open, searchQuery = if (open) it.searchQuery else "")
         }
-    }
-
-    fun setHapticEnabled(enabled: Boolean) {
-        _uiState.update { it.copy(hapticEnabled = enabled) }
     }
 
     fun toggleTaskComplete(taskId: String) {
@@ -153,30 +137,12 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateTask(updated: Task) {
-        _uiState.update { state ->
-            val tasks = state.tasks.map { if (it.id == updated.id) updated else it }
-            persist(tasks)
-            state.copy(tasks = tasks, selectedTaskId = updated.id)
-        }
-    }
-
     fun deleteTask(taskId: String) {
         haptic()
         _uiState.update { state ->
             val tasks = state.tasks.filter { it.id != taskId }
             persist(tasks)
-            state.copy(
-                tasks = tasks,
-                selectedTaskId = if (state.selectedTaskId == taskId) null else state.selectedTaskId
-            )
-        }
-    }
-
-    fun resetData() {
-        val tasks = repository.resetTasks()
-        _uiState.update {
-            it.copy(tasks = tasks, selectedTaskId = null, isCreatingTask = false)
+            state.copy(tasks = tasks)
         }
     }
 }

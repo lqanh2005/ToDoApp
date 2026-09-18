@@ -1,6 +1,7 @@
 package com.lqanh.todoandroid
 
 import android.os.Bundle
+import android.widget.PopupMenu
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
@@ -18,9 +19,6 @@ import com.lqanh.todoandroid.databinding.ActivityMainBinding
 import com.lqanh.todoandroid.ui.TaskViewModel
 import com.lqanh.todoandroid.ui.fragments.CreateTaskFragment
 import com.lqanh.todoandroid.ui.fragments.ScheduleFragment
-import com.lqanh.todoandroid.ui.fragments.SettingsFragment
-import com.lqanh.todoandroid.ui.fragments.StatisticsFragment
-import com.lqanh.todoandroid.ui.fragments.TaskDetailFragment
 import com.lqanh.todoandroid.ui.fragments.TasksFragment
 import kotlinx.coroutines.launch
 
@@ -43,10 +41,8 @@ class MainActivity : AppCompatActivity() {
 
         binding.bottomNav.setOnItemSelectedListener { item ->
             val tab = when (item.itemId) {
-                R.id.nav_tasks -> NavigationTab.CONG_VIEC
                 R.id.nav_schedule -> NavigationTab.LICH_TRINH
-                R.id.nav_stats -> NavigationTab.THONG_KE
-                else -> NavigationTab.CAI_DAT
+                else -> NavigationTab.CONG_VIEC
             }
             viewModel.selectTab(tab)
             true
@@ -54,12 +50,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.fabAdd.setOnClickListener { viewModel.openCreate() }
         binding.btnBack.setOnClickListener { viewModel.closeChild() }
-        binding.btnSearch.setOnClickListener { viewModel.toggleSearch() }
-        binding.btnProfile.setOnClickListener {
-            viewModel.closeChild()
-            viewModel.selectTab(NavigationTab.CAI_DAT)
-            binding.bottomNav.selectedItemId = R.id.nav_settings
-        }
+        binding.btnMenu.setOnClickListener { showMenu() }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -78,7 +69,9 @@ class MainActivity : AppCompatActivity() {
                 viewModel.uiState.collect { state ->
                     binding.tvTitle.text = state.headerTitle
                     binding.btnBack.isVisible = state.isChildScreen
-                    binding.btnSearch.isVisible =
+                    binding.ivLogo.isVisible = !state.isChildScreen
+                    binding.tvSubtitle.isVisible = !state.isChildScreen
+                    binding.btnMenu.isVisible =
                         !state.isChildScreen && state.currentTab == NavigationTab.CONG_VIEC
                     binding.fabAdd.isVisible = !state.isChildScreen
                     binding.bottomNav.isVisible = !state.isChildScreen
@@ -87,26 +80,34 @@ class MainActivity : AppCompatActivity() {
                         val navId = when (state.currentTab) {
                             NavigationTab.CONG_VIEC -> R.id.nav_tasks
                             NavigationTab.LICH_TRINH -> R.id.nav_schedule
-                            NavigationTab.THONG_KE -> R.id.nav_stats
-                            NavigationTab.CAI_DAT -> R.id.nav_settings
                         }
                         if (binding.bottomNav.selectedItemId != navId) {
                             binding.bottomNav.selectedItemId = navId
                         }
                     }
 
-                    renderScreen(state.isCreatingTask, state.selectedTaskId, state.currentTab)
+                    renderScreen(state.isCreatingTask, state.currentTab)
                 }
             }
         }
     }
 
+    private fun showMenu() {
+        PopupMenu(this, binding.btnMenu).apply {
+            menu.add(0, 1, 0, "Tìm kiếm")
+            setOnMenuItemClickListener { item ->
+                if (item.itemId == 1) viewModel.toggleSearch()
+                true
+            }
+            show()
+        }
+    }
+
     private var lastKey: String? = null
 
-    private fun renderScreen(creating: Boolean, taskId: String?, tab: NavigationTab) {
+    private fun renderScreen(creating: Boolean, tab: NavigationTab) {
         val key = when {
             creating -> "create"
-            taskId != null -> "detail:$taskId"
             else -> "tab:$tab"
         }
         if (key == lastKey) return
@@ -114,11 +115,8 @@ class MainActivity : AppCompatActivity() {
 
         val fragment = when {
             creating -> CreateTaskFragment()
-            taskId != null -> TaskDetailFragment()
-            tab == NavigationTab.CONG_VIEC -> TasksFragment()
             tab == NavigationTab.LICH_TRINH -> ScheduleFragment()
-            tab == NavigationTab.THONG_KE -> StatisticsFragment()
-            else -> SettingsFragment()
+            else -> TasksFragment()
         }
 
         supportFragmentManager.commit {

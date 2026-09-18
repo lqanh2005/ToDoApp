@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -14,6 +15,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.lqanh.todoandroid.R
 import com.lqanh.todoandroid.data.PriorityLevel
+import com.lqanh.todoandroid.data.Task
 import com.lqanh.todoandroid.data.TaskStatus
 import com.lqanh.todoandroid.databinding.FragmentTasksBinding
 import com.lqanh.todoandroid.ui.TaskViewModel
@@ -27,12 +29,10 @@ class TasksFragment : Fragment() {
     private val viewModel: TaskViewModel by activityViewModels()
 
     private var category = "all"
-    private var statusTab: TaskStatus = TaskStatus.TODO
     private var sortMode = 0
 
     private val adapter by lazy {
         TaskAdapter(
-            onSelect = { viewModel.selectTask(it.id) },
             onToggleComplete = { viewModel.toggleTaskComplete(it) },
             onChangeStatus = { id, status -> viewModel.changeTaskStatus(id, status) },
             onDelete = { viewModel.deleteTask(it) }
@@ -59,30 +59,7 @@ class TasksFragment : Fragment() {
             refreshList()
         }
 
-        binding.statusToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
-            if (!isChecked) return@addOnButtonCheckedListener
-            statusTab = when (checkedId) {
-                R.id.btnStatusDoing -> TaskStatus.DOING
-                R.id.btnStatusDone -> TaskStatus.DONE
-                else -> TaskStatus.TODO
-            }
-            binding.tvListTitle.text = when (statusTab) {
-                TaskStatus.TODO -> "Danh sách cần làm"
-                TaskStatus.DOING -> "Đang thực hiện"
-                TaskStatus.DONE -> "Đã hoàn thành"
-            }
-            refreshList()
-        }
-
-        binding.btnSort.setOnClickListener {
-            sortMode = (sortMode + 1) % 3
-            binding.btnSort.text = when (sortMode) {
-                0 -> "Ưu tiên cao"
-                1 -> "Theo giờ hẹn"
-                else -> "Tên việc A-Z"
-            }
-            refreshList()
-        }
+        binding.btnSort.setOnClickListener { showSortMenu() }
 
         binding.btnCloseSearch.setOnClickListener { viewModel.setSearchOpen(false) }
         binding.etSearch.doAfterTextChanged { viewModel.setSearchQuery(it?.toString().orEmpty()) }
@@ -99,21 +76,50 @@ class TasksFragment : Fragment() {
                     val total = state.tasks.size
                     val percent = if (total == 0) 0 else (done * 100 / total)
                     binding.tvProgressPercent.text = "$percent%"
-                    binding.tvProgressDesc.text = "Bạn đã hoàn thành $done/$total nhiệm vụ. Cố gắng thêm chút nữa nhé!"
+                    binding.tvProgressDesc.text = getString(R.string.today_progress, done, total)
                     binding.progressToday.progress = percent
+                    updateCategoryCounts(state.tasks)
                     refreshList(state.tasks, state.searchQuery)
                 }
             }
         }
     }
 
+    private fun showSortMenu() {
+        PopupMenu(requireContext(), binding.btnSort).apply {
+            menu.add(0, 0, 0, "Ưu tiên")
+            menu.add(0, 1, 1, "Deadline")
+            menu.add(0, 2, 2, "Mới nhất")
+            menu.add(0, 3, 3, "Cũ nhất")
+            menu.add(0, 4, 4, "Tùy chỉnh")
+            setOnMenuItemClickListener { item ->
+                sortMode = item.itemId
+                refreshList()
+                true
+            }
+            show()
+        }
+    }
+
+    private fun updateCategoryCounts(tasks: List<Task>) {
+        val all = tasks.size
+        val work = tasks.count { it.category == "work" }
+        val personal = tasks.count { it.category == "personal" }
+        val study = tasks.count { it.category == "study" }
+        val shopping = tasks.count { it.category == "shopping" }
+        binding.chipAll.text = "Tất cả $all"
+        binding.chipWork.text = "Công việc $work"
+        binding.chipPersonal.text = "Cá nhân $personal"
+        binding.chipStudy.text = "Học tập $study"
+        binding.chipShopping.text = "Mua sắm $shopping"
+    }
+
     private fun refreshList(
-        tasks: List<com.lqanh.todoandroid.data.Task> = viewModel.uiState.value.tasks,
+        tasks: List<Task> = viewModel.uiState.value.tasks,
         query: String = viewModel.uiState.value.searchQuery
     ) {
         val priorityScore = mapOf(PriorityLevel.CAO to 3, PriorityLevel.TB to 2, PriorityLevel.THAP to 1)
         val filtered = tasks
-            .filter { it.status == statusTab }
             .filter { category == "all" || it.category == category }
             .filter {
                 if (query.isBlank()) true
@@ -127,7 +133,9 @@ class TasksFragment : Fragment() {
             .sortedWith(
                 when (sortMode) {
                     1 -> compareBy { it.dueTime }
-                    2 -> compareBy { it.title }
+                    2 -> compareByDescending { it.id }
+                    3 -> compareBy { it.id }
+                    4 -> compareBy { it.title }
                     else -> compareByDescending { priorityScore[it.priority] ?: 0 }
                 }
             )
