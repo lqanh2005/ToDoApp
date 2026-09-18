@@ -33,6 +33,8 @@ class DateScheduleDialogFragment : DialogFragment() {
     private var timeHour: Int? = null
     private var timeMinute: Int? = null
     private var reminder: String? = null
+    private var reminderKey: String? = null
+    private var reminderCustom: String? = null
     private var repeat: String? = null
     private var quickKey: String? = "today"
 
@@ -94,6 +96,20 @@ class DateScheduleDialogFragment : DialogFragment() {
             } else {
                 timeHour = bundle.getInt(SetTimeDialogFragment.KEY_HOUR)
                 timeMinute = bundle.getInt(SetTimeDialogFragment.KEY_MINUTE)
+            }
+            updateOptionLabels()
+        }
+
+        setFragmentResultListener(ReminderDialogFragment.REQUEST_KEY) { _, bundle ->
+            val enabled = bundle.getBoolean(ReminderDialogFragment.KEY_ENABLED)
+            if (!enabled) {
+                reminder = null
+                reminderKey = null
+                reminderCustom = null
+            } else {
+                reminderKey = bundle.getString(ReminderDialogFragment.KEY_VALUE)
+                reminder = bundle.getString(ReminderDialogFragment.KEY_LABEL)
+                reminderCustom = bundle.getString(ReminderDialogFragment.KEY_CUSTOM_LABEL)
             }
             updateOptionLabels()
         }
@@ -250,25 +266,14 @@ class DateScheduleDialogFragment : DialogFragment() {
     }
 
     private fun pickReminder() {
-        PopupMenu(requireContext(), binding.rowReminder).apply {
-            menu.add(0, 0, 0, "No")
-            menu.add(0, 1, 1, "On time")
-            menu.add(0, 2, 2, "5 min before")
-            menu.add(0, 3, 3, "15 min before")
-            menu.add(0, 4, 4, "1 hour before")
-            setOnMenuItemClickListener { item ->
-                reminder = when (item.itemId) {
-                    0 -> null
-                    1 -> "On time"
-                    2 -> "5 min"
-                    3 -> "15 min"
-                    else -> "1 hour"
-                }
-                updateOptionLabels()
-                true
-            }
-            show()
-        }
+        if (childFragmentManager.findFragmentByTag(ReminderDialogFragment.TAG) != null) return
+        ReminderDialogFragment
+            .newInstance(
+                enabled = reminder != null,
+                key = reminderKey,
+                custom = reminderCustom
+            )
+            .show(childFragmentManager, ReminderDialogFragment.TAG)
     }
 
     private fun pickRepeat() {

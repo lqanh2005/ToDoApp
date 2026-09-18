@@ -1,11 +1,21 @@
 package com.lqanh.todoandroid
 
+import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.widget.PopupMenu
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -16,6 +26,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.lqanh.todoandroid.data.NavigationTab
 import com.lqanh.todoandroid.databinding.ActivityMainBinding
+import com.lqanh.todoandroid.notify.TaskAlarmReceiver
+import com.lqanh.todoandroid.notify.TaskNotifier
 import com.lqanh.todoandroid.ui.TaskViewModel
 import com.lqanh.todoandroid.ui.fragments.CreateTaskBottomSheet
 import com.lqanh.todoandroid.ui.fragments.ScheduleFragment
@@ -27,11 +39,24 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val viewModel: TaskViewModel by viewModels()
 
+    private val requestNotifPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { }
+
+    private val tasksChangedReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            viewModel.reloadFromStorage()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        TaskNotifier.ensureChannel(this)
+        maybeRequestNotificationPermission()
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -66,6 +91,21 @@ class MainActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.completionPrompt.collect { task ->
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("Hết thời gian task")
+                            .setMessage("\"${task.title}\" đã hết thời gian.\nBạn đã hoàn thành chưa?")
+                            .setPositiveButton("Đã xong") { _, _ ->
+                                viewModel.resolveCompletion(task.id, true)
+                            }
+                            .setNegativeButton("Chưa xong") { _, _ ->
+                                viewModel.resolveCompletion(task.id, false)
+                            }
+                            .setNeutralButton("Để sau", null)
+                            .show()
+                    }
+                }
                 viewModel.uiState.collect { state ->
                     binding.tvTitle.text = state.headerTitle
                     binding.btnBack.isVisible = state.isChildScreen
@@ -89,6 +129,31 @@ class MainActivity : AppCompatActivity() {
                     renderScreen(state.currentTab)
                 }
             }
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        val filter = IntentFilter(TaskAlarmReceiver.ACTION_TASKS_CHANGED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(tasksChangedReceiver, filter, RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(tasksChangedReceiver, filter)
+        }
+        viewModel.reloadFromStorage()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        runCatching { unregisterReceiver(tasksChangedReceiver) }
+    }
+
+    private fun maybeRequestNotificationPermission() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestNotifPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 

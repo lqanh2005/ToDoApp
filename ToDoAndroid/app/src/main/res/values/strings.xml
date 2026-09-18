@@ -10,5 +10,9 @@
     <string name="menu">Menu</string>
     <string name="sort_tasks">Sắp xếp công việc</string>
     <string name="start_task">Bắt đầu</string>
+    <string name="status_waiting">Chưa tới giờ</string>
+    <string name="status_doing">Đang làm</string>
+    <string name="status_done">Xong</string>
+    <string name="status_update">Cập nhật</string>
     <string name="today_progress">Hôm nay · %1$d/%2$d</string>
 </resources>

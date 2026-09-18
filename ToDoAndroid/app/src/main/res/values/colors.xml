@@ -32,6 +32,15 @@
     <color name="surface_container_high">#DCE9FF</color>
     <color name="surface_container_highest">#D3E4FE</color>
 
+    <color name="status_doing">#10B981</color>
+    <color name="status_done">#22C55E</color>
+    <color name="status_not_done">#F59E0B</color>
+    <color name="task_bg_done">#F0FDF4</color>
+    <color name="task_stroke_done">#BBF7D0</color>
+    <color name="task_bg_not_done">#FFFBEB</color>
+    <color name="task_stroke_not_done">#FDE68A</color>
+    <color name="task_bg_doing">#ECFDF5</color>
+    <color name="task_stroke_doing">#A7F3D0</color>
     <color name="error">#EF4444</color>
     <color name="error_container">#FFDAD6</color>
     <color name="on_error_container">#93000A</color>

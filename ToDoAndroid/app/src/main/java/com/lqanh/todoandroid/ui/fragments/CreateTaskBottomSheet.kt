@@ -24,6 +24,7 @@ import com.lqanh.todoandroid.R
 import com.lqanh.todoandroid.data.PriorityLevel
 import com.lqanh.todoandroid.data.Subtask
 import com.lqanh.todoandroid.data.Task
+import com.lqanh.todoandroid.data.TaskDateUtils
 import com.lqanh.todoandroid.data.TaskStatus
 import com.lqanh.todoandroid.databinding.BottomSheetCreateTaskBinding
 import com.lqanh.todoandroid.ui.TaskViewModel
@@ -103,10 +104,12 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
             val rem = bundle.getString(DateScheduleDialogFragment.KEY_REMINDER).orEmpty()
             reminderValue = when {
                 rem.isBlank() -> "0"
-                rem == "On time" -> "0"
+                rem.contains("At task", true) || rem.equals("On time", true) -> "0"
                 rem.startsWith("5") -> "5"
                 rem.startsWith("15") -> "15"
-                else -> "60"
+                rem.startsWith("30") -> "30"
+                rem.startsWith("1 day") -> "1440"
+                else -> rem
             }
             updateDayLabel()
         }
@@ -235,6 +238,9 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
             categoryEmoji = categoryEmoji,
             dueDate = dueLabel.ifBlank { "" },
             dueTime = dueLabel.ifBlank { "" },
+            dueAtMillis = dueMillis?.let { TaskDateUtils.startOfDay(it) },
+            startAtMillis = TaskDateUtils.buildStartEnd(dueMillis, hasTime, timeHour, timeMinute).first,
+            endAtMillis = TaskDateUtils.buildStartEnd(dueMillis, hasTime, timeHour, timeMinute).second,
             reminder = reminderValue,
             subtasks = collectSubtasks()
         )
