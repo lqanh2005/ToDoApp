@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_rounded"
+    android:orientation="vertical"
+    android:paddingHorizontal="16dp"
+    android:paddingTop="18dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Set Time"
+        android:textColor="#334155"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:minHeight="280dp">
+
+        <TimePicker
+            android:id="@+id/timePicker"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:timePickerMode="clock" />
+
+        <LinearLayout
+            android:id="@+id/keyboardPanel"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:paddingVertical="24dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp"
+                android:text="Type in time"
+                android:textColor="#94A3B8"
+                android:textSize="14sp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/etHour"
+                        android:layout_width="100dp"
+                        android:layout_height="72dp"
+                        android:background="@android:color/transparent"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:maxLength="2"
+                        android:textColor="#334155"
+                        android:textSize="48sp"
+                        android:textStyle="bold"
+                        tools:text="17" />
+
+                    <View
+                        android:layout_width="88dp"
+                        android:layout_height="2dp"
+                        android:background="#CBD5E1" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="hour"
+                        android:textColor="#94A3B8"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingHorizontal="12dp"
+                    android:text=":"
+                    android:textColor="#94A3B8"
+                    android:textSize="48sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/etMinute"
+                        android:layout_width="100dp"
+                        android:layout_height="72dp"
+                        android:background="@android:color/transparent"
+                        android:gravity="center"
+                        android:inputType="number"
+                        android:maxLength="2"
+                        android:textColor="#334155"
+                        android:textSize="48sp"
+                        android:textStyle="bold"
+                        tools:text="09" />
+
+                    <View
+                        android:layout_width="88dp"
+                        android:layout_height="2dp"
+                        android:background="#CBD5E1" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="minute"
+                        android:textColor="#94A3B8"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btnToggleInput"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="bottom|start"
+            android:layout_marginBottom="4dp"
+            android:background="@drawable/bg_keyboard_btn"
+            android:contentDescription="Chuyển chế độ nhập"
+            android:padding="8dp"
+            android:src="@drawable/ic_keyboard" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/chipNoTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_quick_chip"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="No Time"
+                android:textColor="@color/quick_chip_text_color"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/chip0700"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_quick_chip"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="07:00"
+                android:textColor="@color/quick_chip_text_color"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/chip0900"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_quick_chip"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="09:00"
+                android:textColor="@color/quick_chip_text_color"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/chip1000"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_quick_chip"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="10:00"
+                android:textColor="@color/quick_chip_text_color"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/chip1200"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_quick_chip"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="12:00"
+                android:textColor="@color/quick_chip_text_color"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/chip1400"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_quick_chip"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="14:00"
+                android:textColor="@color/quick_chip_text_color"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/chip1600"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_quick_chip"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="16:00"
+                android:textColor="@color/quick_chip_text_color"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/chip1800"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/bg_quick_chip"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="18:00"
+                android:textColor="@color/quick_chip_text_color"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:orientation="horizontal"
+        android:paddingTop="12dp"
+        android:paddingBottom="4dp">
+
+        <TextView
+            android:id="@+id/btnCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:text="CANCEL"
+            android:textAllCaps="true"
+            android:textColor="#8BB4F0"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnDone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="12dp"
+            android:text="DONE"
+            android:textAllCaps="true"
+            android:textColor="#5B8FD9"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

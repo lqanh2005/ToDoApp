@@ -20,19 +20,17 @@ import kotlinx.coroutines.launch
 data class AppUiState(
     val tasks: List<Task> = emptyList(),
     val currentTab: NavigationTab = NavigationTab.CONG_VIEC,
-    val isCreatingTask: Boolean = false,
     val searchQuery: String = "",
     val isSearchOpen: Boolean = false,
     val hapticEnabled: Boolean = true
 ) {
     val isChildScreen: Boolean
-        get() = isCreatingTask
+        get() = false
 
     val headerTitle: String
-        get() = when {
-            isCreatingTask -> "Tạo Công Việc Mới"
-            currentTab == NavigationTab.LICH_TRINH -> "Lịch Trình"
-            else -> "Công Việc"
+        get() = when (currentTab) {
+            NavigationTab.LICH_TRINH -> "Lịch Trình"
+            NavigationTab.CONG_VIEC -> "Công Việc"
         }
 }
 
@@ -66,20 +64,11 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selectTab(tab: NavigationTab) {
-        _uiState.update {
-            it.copy(
-                currentTab = tab,
-                isCreatingTask = false
-            )
-        }
-    }
-
-    fun openCreate() {
-        _uiState.update { it.copy(isCreatingTask = true) }
+        _uiState.update { it.copy(currentTab = tab) }
     }
 
     fun closeChild() {
-        _uiState.update { it.copy(isCreatingTask = false) }
+        // giữ API cũ cho nút back nếu cần
     }
 
     fun toggleSearch() {
@@ -133,7 +122,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { state ->
             val tasks = listOf(task) + state.tasks
             persist(tasks)
-            state.copy(tasks = tasks, isCreatingTask = false)
+            state.copy(tasks = tasks)
         }
     }
 

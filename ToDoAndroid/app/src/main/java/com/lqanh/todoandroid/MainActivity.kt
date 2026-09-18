@@ -17,7 +17,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.lqanh.todoandroid.data.NavigationTab
 import com.lqanh.todoandroid.databinding.ActivityMainBinding
 import com.lqanh.todoandroid.ui.TaskViewModel
-import com.lqanh.todoandroid.ui.fragments.CreateTaskFragment
+import com.lqanh.todoandroid.ui.fragments.CreateTaskBottomSheet
 import com.lqanh.todoandroid.ui.fragments.ScheduleFragment
 import com.lqanh.todoandroid.ui.fragments.TasksFragment
 import kotlinx.coroutines.launch
@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        binding.fabAdd.setOnClickListener { viewModel.openCreate() }
+        binding.fabAdd.setOnClickListener { showCreateTaskSheet() }
         binding.btnBack.setOnClickListener { viewModel.closeChild() }
         binding.btnMenu.setOnClickListener { showMenu() }
 
@@ -86,10 +86,15 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
 
-                    renderScreen(state.isCreatingTask, state.currentTab)
+                    renderScreen(state.currentTab)
                 }
             }
         }
+    }
+
+    private fun showCreateTaskSheet() {
+        if (supportFragmentManager.findFragmentByTag(CreateTaskBottomSheet.TAG) != null) return
+        CreateTaskBottomSheet().show(supportFragmentManager, CreateTaskBottomSheet.TAG)
     }
 
     private fun showMenu() {
@@ -103,20 +108,15 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var lastKey: String? = null
+    private var lastTab: NavigationTab? = null
 
-    private fun renderScreen(creating: Boolean, tab: NavigationTab) {
-        val key = when {
-            creating -> "create"
-            else -> "tab:$tab"
-        }
-        if (key == lastKey) return
-        lastKey = key
+    private fun renderScreen(tab: NavigationTab) {
+        if (tab == lastTab) return
+        lastTab = tab
 
-        val fragment = when {
-            creating -> CreateTaskFragment()
-            tab == NavigationTab.LICH_TRINH -> ScheduleFragment()
-            else -> TasksFragment()
+        val fragment = when (tab) {
+            NavigationTab.LICH_TRINH -> ScheduleFragment()
+            NavigationTab.CONG_VIEC -> TasksFragment()
         }
 
         supportFragmentManager.commit {

@@ -12,7 +12,9 @@
         <item name="android:windowBackground">@color/surface</item>
     </style>
 
-    <style name="Theme.ToDoAndroid" parent="Base.Theme.ToDoAndroid" />
+    <style name="Theme.ToDoAndroid" parent="Base.Theme.ToDoAndroid">
+        <item name="bottomSheetDialogTheme">@style/ThemeOverlay.ToDo.BottomSheetDialog</item>
+    </style>
 
     <style name="Widget.ToDoList.Chip" parent="Widget.Material3.Chip.Filter">
         <item name="chipBackgroundColor">@color/chip_bg</item>
@@ -24,5 +26,13 @@
         <item name="chipCornerRadius">999dp</item>
         <item name="android:textSize">12sp</item>
         <item name="android:textStyle">bold</item>
+    </style>
+    <style name="CalendarWeekday">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">#94A3B8</item>
+        <item name="android:textSize">12sp</item>
     </style>
 </resources>

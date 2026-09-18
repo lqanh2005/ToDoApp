@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingVertical="6dp">
+
+    <View
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:background="@drawable/bg_checkbox_unchecked" />
+
+    <EditText
+        android:id="@+id/etSubtask"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:background="@android:color/transparent"
+        android:hint="Input the sub-task"
+        android:imeOptions="actionNext"
+        android:inputType="textCapSentences"
+        android:maxLines="1"
+        android:textColor="@color/on_surface"
+        android:textColorHint="#9AA3B2"
+        android:textSize="15sp" />
+
+    <ImageButton
+        android:id="@+id/btnRemoveSubtask"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Xóa sub-task"
+        android:padding="6dp"
+        android:src="@drawable/ic_close" />
+</LinearLayout>
