@@ -20,7 +20,7 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Tháng trước"
+            android:contentDescription="Previous month"
             android:src="@drawable/ic_chevron_left" />
 
         <TextView
@@ -39,7 +39,7 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Tháng sau"
+            android:contentDescription="Next month"
             android:src="@drawable/ic_chevron_right" />
     </LinearLayout>
 
@@ -313,7 +313,7 @@
             android:paddingVertical="12dp"
             android:text="DONE"
             android:textAllCaps="true"
-            android:textColor="#8BB4F0"
+            android:textColor="#2563EB"
             android:textSize="14sp"
             android:textStyle="bold" />
     </LinearLayout>

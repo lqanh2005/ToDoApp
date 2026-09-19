@@ -37,18 +37,34 @@ object TaskAlarmScheduler {
     }
 
     fun cancelForTask(context: Context, taskId: String) {
-        val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        am.cancel(pendingIntent(context, ACTION_START, taskId, "", requestCode(taskId, 1)))
-        am.cancel(pendingIntent(context, ACTION_END, taskId, "", requestCode(taskId, 2)))
+        try {
+            val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            am.cancel(pendingIntent(context, ACTION_START, taskId, "", requestCode(taskId, 1)))
+            am.cancel(pendingIntent(context, ACTION_END, taskId, "", requestCode(taskId, 2)))
+        } catch (_: Exception) {
+        }
     }
 
     private fun setExact(context: Context, task: Task, action: String, triggerAt: Long, code: Int) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val pi = pendingIntent(context, action, task.id, task.title, code)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
-        } else {
-            am.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !am.canScheduleExactAlarms()) {
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+                return
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+            } else {
+                am.setExact(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+            }
+        } catch (_: SecurityException) {
+            try {
+                am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+            } catch (_: Exception) {
+                am.set(AlarmManager.RTC_WAKEUP, triggerAt, pi)
+            }
+        } catch (_: Exception) {
         }
     }
 
@@ -73,6 +89,6 @@ object TaskAlarmScheduler {
     }
 
     private fun requestCode(taskId: String, type: Int): Int {
-        return (taskId.hashCode() and 0x7FFFFFFF) * 10 + type
+        return 31 * (taskId.hashCode() and 0x0FFFFFFF) + type
     }
 }

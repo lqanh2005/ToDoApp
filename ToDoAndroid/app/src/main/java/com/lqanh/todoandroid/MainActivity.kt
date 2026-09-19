@@ -1,4 +1,4 @@
-package com.lqanh.todoandroid
+﻿package com.lqanh.todoandroid
 
 import android.Manifest
 import android.content.BroadcastReceiver
@@ -21,6 +21,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.fragment.app.commit
+import androidx.interpolator.view.animation.FastOutLinearInInterpolator
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -28,9 +30,11 @@ import com.lqanh.todoandroid.data.NavigationTab
 import com.lqanh.todoandroid.databinding.ActivityMainBinding
 import com.lqanh.todoandroid.notify.TaskAlarmReceiver
 import com.lqanh.todoandroid.notify.TaskNotifier
+import com.lqanh.todoandroid.ui.AppUiState
 import com.lqanh.todoandroid.ui.TaskViewModel
 import com.lqanh.todoandroid.ui.fragments.CreateTaskBottomSheet
 import com.lqanh.todoandroid.ui.fragments.ScheduleFragment
+import com.lqanh.todoandroid.ui.fragments.TaskDetailFragment
 import com.lqanh.todoandroid.ui.fragments.TasksFragment
 import kotlinx.coroutines.launch
 
@@ -48,6 +52,9 @@ class MainActivity : AppCompatActivity() {
             viewModel.reloadFromStorage()
         }
     }
+
+    private var lastScreenKey: String? = null
+    private var lastChildScreen: Boolean? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,6 +83,8 @@ class MainActivity : AppCompatActivity() {
         binding.fabAdd.setOnClickListener { showCreateTaskSheet() }
         binding.btnBack.setOnClickListener { viewModel.closeChild() }
         binding.btnMenu.setOnClickListener { showMenu() }
+        binding.btnMenu.isVisible = false
+        binding.btnBack.isVisible = false
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -94,27 +103,26 @@ class MainActivity : AppCompatActivity() {
                 launch {
                     viewModel.completionPrompt.collect { task ->
                         AlertDialog.Builder(this@MainActivity)
-                            .setTitle("Hết thời gian task")
-                            .setMessage("\"${task.title}\" đã hết thời gian.\nBạn đã hoàn thành chưa?")
-                            .setPositiveButton("Đã xong") { _, _ ->
+                            .setTitle("Task time is up")
+                            .setMessage("\"${task.title}\" has ended.\nHave you completed it?")
+                            .setPositiveButton("Done") { _, _ ->
                                 viewModel.resolveCompletion(task.id, true)
                             }
-                            .setNegativeButton("Chưa xong") { _, _ ->
+                            .setNegativeButton("Not done") { _, _ ->
                                 viewModel.resolveCompletion(task.id, false)
                             }
-                            .setNeutralButton("Để sau", null)
+                            .setNeutralButton("Later", null)
                             .show()
                     }
                 }
                 viewModel.uiState.collect { state ->
                     binding.tvTitle.text = state.headerTitle
-                    binding.btnBack.isVisible = state.isChildScreen
-                    binding.ivLogo.isVisible = !state.isChildScreen
-                    binding.tvSubtitle.isVisible = !state.isChildScreen
-                    binding.btnMenu.isVisible =
-                        !state.isChildScreen && state.currentTab == NavigationTab.CONG_VIEC
-                    binding.fabAdd.isVisible = !state.isChildScreen
-                    binding.bottomNav.isVisible = !state.isChildScreen
+
+                    if (lastChildScreen != state.isChildScreen) {
+                        val animate = lastChildScreen != null
+                        lastChildScreen = state.isChildScreen
+                        setChromeVisible(!state.isChildScreen, animate)
+                    }
 
                     if (!state.isChildScreen) {
                         val navId = when (state.currentTab) {
@@ -126,7 +134,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
 
-                    renderScreen(state.currentTab)
+                    renderScreen(state)
                 }
             }
         }
@@ -164,7 +172,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showMenu() {
         PopupMenu(this, binding.btnMenu).apply {
-            menu.add(0, 1, 0, "Tìm kiếm")
+            menu.add(0, 1, 0, "Search")
             setOnMenuItemClickListener { item ->
                 if (item.itemId == 1) viewModel.toggleSearch()
                 true
@@ -173,19 +181,144 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var lastTab: NavigationTab? = null
-
-    private fun renderScreen(tab: NavigationTab) {
-        if (tab == lastTab) return
-        lastTab = tab
-
-        val fragment = when (tab) {
-            NavigationTab.LICH_TRINH -> ScheduleFragment()
-            NavigationTab.CONG_VIEC -> TasksFragment()
+    private fun setChromeVisible(show: Boolean, animate: Boolean) {
+        val views = listOf(binding.header, binding.headerDivider, binding.bottomNav, binding.fabAdd)
+        if (!animate) {
+            views.forEach { view ->
+                view.animate().cancel()
+                view.alpha = 1f
+                view.translationY = 0f
+                view.isVisible = show
+            }
+            return
         }
+
+        val duration = 220L
+        views.forEach { view ->
+            view.animate().cancel()
+            val isBottom = view === binding.bottomNav || view === binding.fabAdd
+            if (show) {
+                view.isVisible = true
+                view.alpha = 0f
+                view.translationY = if (isBottom) 28f else -16f
+                view.animate()
+                    .alpha(1f)
+                    .translationY(0f)
+                    .setDuration(duration)
+                    .setInterpolator(FastOutSlowInInterpolator())
+                    .start()
+            } else {
+                view.animate()
+                    .alpha(0f)
+                    .translationY(if (isBottom) 28f else -16f)
+                    .setDuration(180L)
+                    .setInterpolator(FastOutLinearInInterpolator())
+                    .withEndAction {
+                        view.isVisible = false
+                        view.alpha = 1f
+                        view.translationY = 0f
+                    }
+                    .start()
+            }
+        }
+    }
+
+    private fun renderScreen(state: AppUiState) {
+        val key = state.selectedTaskId?.let { "detail:$it" } ?: "tab:${state.currentTab}"
+        if (key == lastScreenKey) return
+        val previousKey = lastScreenKey
+        lastScreenKey = key
+
+        val goingToDetail = state.selectedTaskId != null
+        val comingFromDetail = previousKey?.startsWith("detail:") == true
+        val isTabSwitch = !goingToDetail && !comingFromDetail && previousKey != null
 
         supportFragmentManager.commit {
-            replace(R.id.fragmentContainer, fragment)
+            setReorderingAllowed(true)
+
+            var tasks = supportFragmentManager.findFragmentByTag(TAG_TASKS)
+            var schedule = supportFragmentManager.findFragmentByTag(TAG_SCHEDULE)
+            val detail = supportFragmentManager.findFragmentByTag(TAG_DETAIL)
+
+            if (tasks == null) {
+                tasks = TasksFragment().also {
+                    add(R.id.fragmentContainer, it, TAG_TASKS)
+                    if (state.currentTab != NavigationTab.CONG_VIEC || goingToDetail) hide(it)
+                }
+            }
+            if (schedule == null) {
+                schedule = ScheduleFragment().also {
+                    add(R.id.fragmentContainer, it, TAG_SCHEDULE)
+                    if (state.currentTab != NavigationTab.LICH_TRINH || goingToDetail) hide(it)
+                }
+            }
+
+            val tasksFrag = tasks!!
+            val scheduleFrag = schedule!!
+
+            when {
+                goingToDetail -> {
+                    setCustomAnimations(R.anim.slide_up_in, R.anim.fade_out)
+                    if (!tasksFrag.isHidden) hide(tasksFrag)
+                    if (!scheduleFrag.isHidden) hide(scheduleFrag)
+                    detail?.let { remove(it) }
+                    add(
+                        R.id.fragmentContainer,
+                        TaskDetailFragment.newInstance(state.selectedTaskId!!),
+                        TAG_DETAIL
+                    )
+                }
+
+                comingFromDetail -> {
+                    setCustomAnimations(R.anim.fade_in, R.anim.slide_down_out)
+                    detail?.let { remove(it) }
+                    when (state.currentTab) {
+                        NavigationTab.CONG_VIEC -> {
+                            if (tasksFrag.isHidden) show(tasksFrag)
+                            if (!scheduleFrag.isHidden) hide(scheduleFrag)
+                        }
+                        NavigationTab.LICH_TRINH -> {
+                            if (scheduleFrag.isHidden) show(scheduleFrag)
+                            if (!tasksFrag.isHidden) hide(tasksFrag)
+                        }
+                    }
+                }
+
+                isTabSwitch -> {
+                    setCustomAnimations(R.anim.fade_in, R.anim.fade_out)
+                    detail?.let { remove(it) }
+                    when (state.currentTab) {
+                        NavigationTab.CONG_VIEC -> {
+                            if (!scheduleFrag.isHidden) hide(scheduleFrag)
+                            if (tasksFrag.isHidden) show(tasksFrag)
+                        }
+                        NavigationTab.LICH_TRINH -> {
+                            if (!tasksFrag.isHidden) hide(tasksFrag)
+                            if (scheduleFrag.isHidden) show(scheduleFrag)
+                        }
+                    }
+                }
+
+                else -> {
+                    detail?.let { remove(it) }
+                    when (state.currentTab) {
+                        NavigationTab.CONG_VIEC -> {
+                            if (tasksFrag.isHidden) show(tasksFrag)
+                            if (!scheduleFrag.isHidden) hide(scheduleFrag)
+                        }
+                        NavigationTab.LICH_TRINH -> {
+                            if (scheduleFrag.isHidden) show(scheduleFrag)
+                            if (!tasksFrag.isHidden) hide(tasksFrag)
+                        }
+                    }
+                }
+            }
         }
+    }
+
+    companion object {
+        private const val TAG_TASKS = "tab_tasks"
+        private const val TAG_SCHEDULE = "tab_schedule"
+        private const val TAG_DETAIL = "task_detail"
     }
 }

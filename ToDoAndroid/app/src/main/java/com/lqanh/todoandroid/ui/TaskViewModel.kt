@@ -27,15 +27,17 @@ data class AppUiState(
     val currentTab: NavigationTab = NavigationTab.CONG_VIEC,
     val searchQuery: String = "",
     val isSearchOpen: Boolean = false,
-    val hapticEnabled: Boolean = true
+    val hapticEnabled: Boolean = true,
+    val selectedTaskId: String? = null
 ) {
     val isChildScreen: Boolean
-        get() = false
+        get() = selectedTaskId != null
 
     val headerTitle: String
-        get() = when (currentTab) {
-            NavigationTab.LICH_TRINH -> "Lịch Trình"
-            NavigationTab.CONG_VIEC -> "Công Việc"
+        get() = when {
+            selectedTaskId != null -> "Task"
+            currentTab == NavigationTab.LICH_TRINH -> "Schedule"
+            else -> "Tasks"
         }
 }
 
@@ -51,14 +53,14 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     init {
         val tasks = syncTimedStatuses(repository.loadTasks())
         repository.saveTasks(tasks)
-        TaskAlarmScheduler.scheduleAll(application, tasks)
+        runCatching { TaskAlarmScheduler.scheduleAll(application, tasks) }
         _uiState.update { it.copy(tasks = tasks) }
     }
 
     fun reloadFromStorage() {
         val tasks = syncTimedStatuses(repository.loadTasks())
         repository.saveTasks(tasks)
-        TaskAlarmScheduler.scheduleAll(getApplication(), tasks)
+        runCatching { TaskAlarmScheduler.scheduleAll(getApplication(), tasks) }
         _uiState.update { it.copy(tasks = tasks) }
         tasks.filter { it.awaitingCompletion }.forEach { _completionPrompt.tryEmit(it) }
     }
@@ -66,7 +68,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     private fun persist(tasks: List<Task>) {
         viewModelScope.launch {
             repository.saveTasks(tasks)
-            TaskAlarmScheduler.scheduleAll(getApplication(), tasks)
+            runCatching { TaskAlarmScheduler.scheduleAll(getApplication(), tasks) }
         }
     }
 
@@ -106,10 +108,24 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selectTab(tab: NavigationTab) {
-        _uiState.update { it.copy(currentTab = tab) }
+        _uiState.update { it.copy(currentTab = tab, selectedTaskId = null) }
+    }
+
+    fun openTaskDetail(taskId: String) {
+        _uiState.update { it.copy(selectedTaskId = taskId) }
     }
 
     fun closeChild() {
+        _uiState.update { it.copy(selectedTaskId = null) }
+    }
+
+    fun updateTask(task: Task) {
+        _uiState.update { state ->
+            val tasks = state.tasks.map { if (it.id == task.id) task else it }
+                .let { syncTimedStatuses(it) }
+            persist(tasks)
+            state.copy(tasks = tasks)
+        }
     }
 
     fun toggleSearch() {

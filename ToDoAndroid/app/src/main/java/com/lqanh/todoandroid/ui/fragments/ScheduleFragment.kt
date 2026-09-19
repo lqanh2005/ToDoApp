@@ -1,4 +1,4 @@
-package com.lqanh.todoandroid.ui.fragments
+﻿package com.lqanh.todoandroid.ui.fragments
 
 import android.graphics.Color
 import android.os.Bundle
@@ -22,7 +22,6 @@ import com.lqanh.todoandroid.data.TaskStatus
 import com.lqanh.todoandroid.databinding.FragmentScheduleBinding
 import com.lqanh.todoandroid.ui.TaskViewModel
 import com.lqanh.todoandroid.ui.adapters.TaskAdapter
-import androidx.fragment.app.setFragmentResultListener
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -56,11 +55,11 @@ class ScheduleFragment : Fragment() {
             onDelete = { viewModel.deleteTask(it) },
             onAskCompletion = { task ->
                 androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                    .setTitle("Hết thời gian task")
-                    .setMessage("\"${task.title}\" đã hết thời gian.\nBạn đã hoàn thành chưa?")
-                    .setPositiveButton("Đã xong") { _, _ -> viewModel.resolveCompletion(task.id, true) }
-                    .setNegativeButton("Chưa xong") { _, _ -> viewModel.resolveCompletion(task.id, false) }
-                    .setNeutralButton("Để sau", null)
+                    .setTitle("Task time is up")
+                    .setMessage("\"${task.title}\" has ended.\nHave you completed it?")
+                    .setPositiveButton("Done") { _, _ -> viewModel.resolveCompletion(task.id, true) }
+                    .setNegativeButton("Not done") { _, _ -> viewModel.resolveCompletion(task.id, false) }
+                    .setNeutralButton("Later", null)
                     .show()
             },
             onEditSchedule = { task ->
@@ -71,7 +70,9 @@ class ScheduleFragment : Fragment() {
                     ?: System.currentTimeMillis()
                 DateScheduleDialogFragment.newInstance(initial)
                     .show(childFragmentManager, DateScheduleDialogFragment.TAG)
-            }
+            },
+            onOpenDetail = { viewModel.openTaskDetail(it.id) },
+            scheduleStyle = true
         )
     }
 
@@ -86,7 +87,10 @@ class ScheduleFragment : Fragment() {
         binding.rvDayTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.rvDayTasks.adapter = adapter
 
-        setFragmentResultListener(DateScheduleDialogFragment.REQUEST_KEY) { _, bundle ->
+        childFragmentManager.setFragmentResultListener(
+            DateScheduleDialogFragment.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, bundle ->
             val taskId = editingScheduleTaskId ?: return@setFragmentResultListener
             editingScheduleTaskId = null
             val noDate = bundle.getBoolean(DateScheduleDialogFragment.KEY_NO_DATE)
@@ -138,8 +142,7 @@ class ScheduleFragment : Fragment() {
     }
 
     private fun renderCalendar() {
-        binding.tvMonthYear.text = SimpleDateFormat("MMMM yyyy", Locale("vi")).format(displayMonth.time)
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("vi")) else it.toString() }
+        binding.tvMonthYear.text = SimpleDateFormat("MMMM yyyy", Locale.ENGLISH).format(displayMonth.time)
 
         binding.gridDays.removeAllViews()
         val first = (displayMonth.clone() as Calendar).apply {
@@ -210,9 +213,8 @@ class ScheduleFragment : Fragment() {
 
     private fun renderDayTasks() {
         val dayTasks = TaskDateUtils.tasksOnDay(allTasks, selectedDayMillis)
-        binding.tvSelectedDate.text = SimpleDateFormat("EEEE, dd/MM/yyyy", Locale("vi"))
+        binding.tvSelectedDate.text = SimpleDateFormat("EEEE, MMM d, yyyy", Locale.ENGLISH)
             .format(selectedDayMillis)
-            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale("vi")) else it.toString() }
 
         adapter.submitList(dayTasks)
         binding.rvDayTasks.isVisible = dayTasks.isNotEmpty()
@@ -241,9 +243,9 @@ class ScheduleFragment : Fragment() {
         }
         val tomorrow = (today.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }
         val datePart = when (selected.timeInMillis) {
-            today.timeInMillis -> "hôm nay"
-            tomorrow.timeInMillis -> "Ngày mai"
-            else -> SimpleDateFormat("dd 'Th'MM", Locale("vi")).format(Date(millis))
+            today.timeInMillis -> "today"
+            tomorrow.timeInMillis -> "Tomorrow"
+            else -> SimpleDateFormat("MMM d", Locale.ENGLISH).format(Date(millis))
         }
         return if (withTime) "%02d:%02d · %s".format(hour, minute, datePart) else datePart
     }

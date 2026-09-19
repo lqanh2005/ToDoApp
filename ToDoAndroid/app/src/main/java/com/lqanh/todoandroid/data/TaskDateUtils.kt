@@ -35,8 +35,8 @@ object TaskDateUtils {
         if (text.isBlank()) return null
         val today = startOfDay()
         when {
-            text.contains("hôm nay") || text.contains("hom nay") -> return today
-            text.contains("ngày mai") || text.contains("ngay mai") -> {
+            text.contains("today") || text.contains("hôm nay") || text.contains("hom nay") -> return today
+            text.contains("tomorrow") || text.contains("ngày mai") || text.contains("ngay mai") -> {
                 return Calendar.getInstance().apply {
                     timeInMillis = today
                     add(Calendar.DAY_OF_YEAR, 1)

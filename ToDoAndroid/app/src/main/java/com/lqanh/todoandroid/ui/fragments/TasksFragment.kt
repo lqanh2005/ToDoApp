@@ -1,10 +1,9 @@
-package com.lqanh.todoandroid.ui.fragments
+﻿package com.lqanh.todoandroid.ui.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.PopupMenu
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
@@ -21,8 +20,8 @@ import com.lqanh.todoandroid.data.TaskDateUtils
 import com.lqanh.todoandroid.data.TaskStatus
 import com.lqanh.todoandroid.databinding.FragmentTasksBinding
 import com.lqanh.todoandroid.ui.TaskViewModel
-import com.lqanh.todoandroid.ui.adapters.TaskAdapter
-import androidx.fragment.app.setFragmentResultListener
+import com.lqanh.todoandroid.ui.adapters.GroupedTaskAdapter
+import com.lqanh.todoandroid.ui.adapters.TaskSection
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -37,17 +36,27 @@ class TasksFragment : Fragment() {
 
     private var category = "all"
     private var sortMode = 0
+    private val expandedSections = mutableMapOf(
+        TaskSection.PREVIOUS to true,
+        TaskSection.TODAY to true,
+        TaskSection.FUTURE to true,
+        TaskSection.COMPLETE to true
+    )
 
     private val adapter by lazy {
-        TaskAdapter(
+        GroupedTaskAdapter(
             onToggleComplete = { viewModel.toggleTaskComplete(it) },
             onChangeStatus = { id, status ->
                 if (status == TaskStatus.TODO) viewModel.resolveCompletion(id, false)
                 else viewModel.changeTaskStatus(id, status)
             },
             onDelete = { viewModel.deleteTask(it) },
-            onAskCompletion = { showCompletionDialog(it) },
-            onEditSchedule = { showScheduleEditor(it) }
+            onEditSchedule = { showScheduleEditor(it) },
+            onOpenDetail = { viewModel.openTaskDetail(it.id) },
+            onToggleSection = { section ->
+                expandedSections[section] = !(expandedSections[section] ?: true)
+                refreshList()
+            }
         )
     }
 
@@ -62,7 +71,10 @@ class TasksFragment : Fragment() {
         binding.rvTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.rvTasks.adapter = adapter
 
-        setFragmentResultListener(DateScheduleDialogFragment.REQUEST_KEY) { _, bundle ->
+        childFragmentManager.setFragmentResultListener(
+            DateScheduleDialogFragment.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, bundle ->
             val taskId = editingScheduleTaskId ?: return@setFragmentResultListener
             editingScheduleTaskId = null
             val noDate = bundle.getBoolean(DateScheduleDialogFragment.KEY_NO_DATE)
@@ -103,8 +115,6 @@ class TasksFragment : Fragment() {
             refreshList()
         }
 
-        binding.btnSort.setOnClickListener { showSortMenu() }
-
         binding.btnCloseSearch.setOnClickListener { viewModel.setSearchOpen(false) }
         binding.etSearch.doAfterTextChanged { viewModel.setSearchQuery(it?.toString().orEmpty()) }
 
@@ -136,11 +146,11 @@ class TasksFragment : Fragment() {
 
     private fun showCompletionDialog(task: Task) {
         AlertDialog.Builder(requireContext())
-            .setTitle("Hết thời gian task")
-            .setMessage("\"${task.title}\" đã hết thời gian.\nBạn đã hoàn thành chưa?")
-            .setPositiveButton("Đã xong") { _, _ -> viewModel.resolveCompletion(task.id, true) }
-            .setNegativeButton("Chưa xong") { _, _ -> viewModel.resolveCompletion(task.id, false) }
-            .setNeutralButton("Để sau", null)
+            .setTitle("Task time is up")
+            .setMessage("\"${task.title}\" has ended.\nHave you completed it?")
+            .setPositiveButton("Done") { _, _ -> viewModel.resolveCompletion(task.id, true) }
+            .setNegativeButton("Not done") { _, _ -> viewModel.resolveCompletion(task.id, false) }
+            .setNeutralButton("Later", null)
             .show()
     }
 
@@ -177,27 +187,11 @@ class TasksFragment : Fragment() {
         }
         val tomorrow = (today.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }
         val datePart = when (selected.timeInMillis) {
-            today.timeInMillis -> "hôm nay"
-            tomorrow.timeInMillis -> "Ngày mai"
-            else -> SimpleDateFormat("dd 'Th'MM", Locale("vi")).format(Date(millis))
+            today.timeInMillis -> "today"
+            tomorrow.timeInMillis -> "Tomorrow"
+            else -> SimpleDateFormat("MMM d", Locale.ENGLISH).format(Date(millis))
         }
         return if (withTime) "%02d:%02d · %s".format(hour, minute, datePart) else datePart
-    }
-
-    private fun showSortMenu() {
-        PopupMenu(requireContext(), binding.btnSort).apply {
-            menu.add(0, 0, 0, "Ưu tiên")
-            menu.add(0, 1, 1, "Deadline")
-            menu.add(0, 2, 2, "Mới nhất")
-            menu.add(0, 3, 3, "Cũ nhất")
-            menu.add(0, 4, 4, "Tùy chỉnh")
-            setOnMenuItemClickListener { item ->
-                sortMode = item.itemId
-                refreshList()
-                true
-            }
-            show()
-        }
     }
 
     private fun updateCategoryCounts(tasks: List<Task>) {
@@ -206,11 +200,11 @@ class TasksFragment : Fragment() {
         val personal = tasks.count { it.category == "personal" }
         val study = tasks.count { it.category == "study" }
         val shopping = tasks.count { it.category == "shopping" }
-        binding.chipAll.text = "Tất cả $all"
-        binding.chipWork.text = "Công việc $work"
-        binding.chipPersonal.text = "Cá nhân $personal"
-        binding.chipStudy.text = "Học tập $study"
-        binding.chipShopping.text = "Mua sắm $shopping"
+        binding.chipAll.text = "All $all"
+        binding.chipWork.text = "Work $work"
+        binding.chipPersonal.text = "Personal $personal"
+        binding.chipStudy.text = "Study $study"
+        binding.chipShopping.text = "Shopping $shopping"
     }
 
     private fun refreshList(
@@ -238,7 +232,9 @@ class TasksFragment : Fragment() {
                     else -> compareByDescending { priorityScore[it.priority] ?: 0 }
                 }
             )
-        adapter.submitList(filtered)
+
+        val items = GroupedTaskAdapter.buildItems(filtered, expandedSections)
+        adapter.submitList(items)
         binding.tvEmpty.isVisible = filtered.isEmpty()
         binding.rvTasks.isVisible = filtered.isNotEmpty()
     }

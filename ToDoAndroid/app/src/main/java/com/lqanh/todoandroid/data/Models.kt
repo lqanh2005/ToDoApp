@@ -26,7 +26,7 @@ data class Task(
     val status: TaskStatus = TaskStatus.TODO,
     val priority: PriorityLevel = PriorityLevel.TB,
     val category: String = "work",
-    val categoryLabel: String = "Công việc",
+    val categoryLabel: String = "Work",
     val categoryEmoji: String? = "💼",
     val dueDate: String = "",
     val dueTime: String = "",

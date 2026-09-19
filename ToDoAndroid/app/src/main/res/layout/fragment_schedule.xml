@@ -18,7 +18,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Tháng trước"
+            android:contentDescription="Previous month"
             android:src="@drawable/ic_chevron_left" />
 
         <TextView
@@ -36,7 +36,7 @@
             android:layout_width="40dp"
             android:layout_height="40dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Tháng sau"
+            android:contentDescription="Next month"
             android:src="@drawable/ic_chevron_right" />
     </LinearLayout>
 
@@ -110,7 +110,7 @@
         android:layout_weight="1"
         android:gravity="center"
         android:padding="24dp"
-        android:text="Không có công việc trong ngày này.\nBấm + để tạo task."
+        android:text="No tasks on this day.\nTap + to create a task."
         android:textColor="@color/slate_500"
         android:textSize="14sp"
         android:visibility="gone" />

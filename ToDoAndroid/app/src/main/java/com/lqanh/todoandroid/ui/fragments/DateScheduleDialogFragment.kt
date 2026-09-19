@@ -2,6 +2,7 @@ package com.lqanh.todoandroid.ui.fragments
 
 import android.app.Dialog
 import android.graphics.Color
+import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.Gravity
@@ -9,13 +10,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.GridLayout
-import android.widget.PopupMenu
+import android.widget.LinearLayout
+import android.widget.PopupWindow
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
-import androidx.fragment.app.setFragmentResultListener
 import com.lqanh.todoandroid.R
 import com.lqanh.todoandroid.databinding.DialogDateScheduleBinding
 import java.text.SimpleDateFormat
@@ -35,6 +36,7 @@ class DateScheduleDialogFragment : DialogFragment() {
     private var reminder: String? = null
     private var reminderKey: String? = null
     private var reminderCustom: String? = null
+    private var reminderManual = false
     private var repeat: String? = null
     private var quickKey: String? = "today"
 
@@ -89,23 +91,34 @@ class DateScheduleDialogFragment : DialogFragment() {
         binding.btnCancel.setOnClickListener { dismiss() }
         binding.btnDone.setOnClickListener { finishDone() }
 
-        setFragmentResultListener(SetTimeDialogFragment.REQUEST_KEY) { _, bundle ->
+        childFragmentManager.setFragmentResultListener(
+            SetTimeDialogFragment.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, bundle ->
             if (bundle.getBoolean(SetTimeDialogFragment.KEY_NO_TIME)) {
                 timeHour = null
                 timeMinute = null
+                if (!reminderManual) {
+                    clearReminder()
+                }
             } else {
                 timeHour = bundle.getInt(SetTimeDialogFragment.KEY_HOUR)
                 timeMinute = bundle.getInt(SetTimeDialogFragment.KEY_MINUTE)
+                if (!reminderManual || reminderKey == null) {
+                    applyDefaultReminder()
+                }
             }
             updateOptionLabels()
         }
 
-        setFragmentResultListener(ReminderDialogFragment.REQUEST_KEY) { _, bundle ->
+        childFragmentManager.setFragmentResultListener(
+            ReminderDialogFragment.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, bundle ->
+            reminderManual = true
             val enabled = bundle.getBoolean(ReminderDialogFragment.KEY_ENABLED)
             if (!enabled) {
-                reminder = null
-                reminderKey = null
-                reminderCustom = null
+                clearReminder()
             } else {
                 reminderKey = bundle.getString(ReminderDialogFragment.KEY_VALUE)
                 reminder = bundle.getString(ReminderDialogFragment.KEY_LABEL)
@@ -128,7 +141,7 @@ class DateScheduleDialogFragment : DialogFragment() {
                 KEY_HAS_TIME to (timeHour != null),
                 KEY_HOUR to (timeHour ?: -1),
                 KEY_MINUTE to (timeMinute ?: -1),
-                KEY_REMINDER to (reminder ?: ""),
+                KEY_REMINDER to reminderResultLabel(),
                 KEY_REPEAT to (repeat ?: "")
             )
         )
@@ -277,22 +290,111 @@ class DateScheduleDialogFragment : DialogFragment() {
     }
 
     private fun pickRepeat() {
-        PopupMenu(requireContext(), binding.rowRepeat).apply {
-            menu.add(0, 0, 0, "No")
-            menu.add(0, 1, 1, "Daily")
-            menu.add(0, 2, 2, "Weekly")
-            menu.add(0, 3, 3, "Monthly")
-            setOnMenuItemClickListener { item ->
-                repeat = when (item.itemId) {
-                    0 -> null
-                    1 -> "Daily"
-                    2 -> "Weekly"
-                    else -> "Monthly"
-                }
-                updateOptionLabels()
-                true
+        val options = listOf(
+            null to "No",
+            "Daily" to "Daily",
+            "Weekly" to "Weekly",
+            "Monthly" to "Monthly"
+        )
+
+        val content = layoutInflater.inflate(R.layout.popup_repeat_menu, null)
+        val list = content as LinearLayout
+
+        val popup = PopupWindow(
+            content,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            elevation = 10f
+            isOutsideTouchable = true
+        }
+
+        options.forEach { (value, label) ->
+            val row = layoutInflater.inflate(R.layout.item_category_option, list, false) as TextView
+            row.layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                (34 * resources.displayMetrics.density).toInt()
+            )
+            row.text = label
+            val selected = repeat == value
+            if (selected) {
+                row.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary))
+                row.setTypeface(row.typeface, Typeface.BOLD)
             }
-            show()
+            row.setOnClickListener {
+                repeat = value
+                updateOptionLabels()
+                popup.dismiss()
+            }
+            list.addView(row)
+        }
+
+        content.measure(
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        val anchor = binding.tvRepeatValue
+        val xOff = anchor.width - content.measuredWidth
+        popup.showAsDropDown(anchor, xOff, (4 * resources.displayMetrics.density).toInt(), Gravity.START)
+    }
+
+    private fun applyDefaultReminder() {
+        reminderKey = ReminderDialogFragment.OPTION_5_MIN
+        reminder = "5 min"
+        reminderCustom = null
+        reminderManual = false
+    }
+
+    private fun clearReminder() {
+        reminder = null
+        reminderKey = null
+        reminderCustom = null
+    }
+
+    private fun reminderOffsetMinutes(): Int? = when (reminderKey) {
+        ReminderDialogFragment.OPTION_AT_TASK -> 0
+        ReminderDialogFragment.OPTION_5_MIN -> 5
+        ReminderDialogFragment.OPTION_15_MIN -> 15
+        ReminderDialogFragment.OPTION_30_MIN -> 30
+        else -> null
+    }
+
+    private fun formatReminderDisplay(): String? {
+        val key = reminderKey ?: return null
+        val h = timeHour
+        val m = timeMinute
+        val offset = reminderOffsetMinutes()
+        if (h != null && m != null && offset != null) {
+            val cal = Calendar.getInstance().apply {
+                set(Calendar.HOUR_OF_DAY, h)
+                set(Calendar.MINUTE, m)
+                set(Calendar.SECOND, 0)
+                set(Calendar.MILLISECOND, 0)
+                add(Calendar.MINUTE, -offset)
+            }
+            return "%02d:%02d".format(
+                cal.get(Calendar.HOUR_OF_DAY),
+                cal.get(Calendar.MINUTE)
+            )
+        }
+        return when (key) {
+            ReminderDialogFragment.OPTION_CUSTOM -> reminderCustom ?: reminder
+            else -> reminder
+        }
+    }
+
+    private fun reminderResultLabel(): String {
+        return when (reminderKey) {
+            null -> ""
+            ReminderDialogFragment.OPTION_AT_TASK -> "At task time"
+            ReminderDialogFragment.OPTION_5_MIN -> "5 min"
+            ReminderDialogFragment.OPTION_15_MIN -> "15 min"
+            ReminderDialogFragment.OPTION_30_MIN -> "30 min"
+            ReminderDialogFragment.OPTION_1_DAY -> "1 day"
+            ReminderDialogFragment.OPTION_CUSTOM -> reminderCustom ?: reminder ?: ""
+            else -> reminder ?: ""
         }
     }
 
@@ -305,9 +407,9 @@ class DateScheduleDialogFragment : DialogFragment() {
             binding.tvTimeValue.setTextColor(ContextCompat.getColor(requireContext(), R.color.slate_400))
         }
 
-        val rem = reminder
-        binding.tvReminderValue.text = rem ?: "No"
-        val remActive = rem != null
+        val remDisplay = formatReminderDisplay()
+        binding.tvReminderValue.text = remDisplay ?: "No"
+        val remActive = remDisplay != null
         binding.tvReminderValue.setTextColor(
             ContextCompat.getColor(requireContext(), if (remActive) R.color.slate_700 else R.color.slate_400)
         )

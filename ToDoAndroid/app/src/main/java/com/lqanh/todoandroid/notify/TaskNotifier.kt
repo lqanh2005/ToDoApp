@@ -1,4 +1,4 @@
-package com.lqanh.todoandroid.notify
+﻿package com.lqanh.todoandroid.notify
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -23,10 +23,10 @@ object TaskNotifier {
         val manager = context.getSystemService(NotificationManager::class.java) ?: return
         val channel = NotificationChannel(
             CHANNEL_ID,
-            "Trạng thái công việc",
+            "Task status",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Thông báo đến giờ làm và hết giờ task"
+            description = "Alerts when a task starts or ends"
         }
         manager.createNotificationChannel(channel)
     }
@@ -41,8 +41,8 @@ object TaskNotifier {
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_check_circle)
-            .setContentTitle("Đang làm")
-            .setContentText("Đã đến giờ: $title")
+            .setContentTitle("In progress")
+            .setContentText("It's time: $title")
             .setContentIntent(open)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -78,13 +78,13 @@ object TaskNotifier {
         )
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_bell)
-            .setContentTitle("Hết thời gian task")
-            .setContentText("$title — bạn đã xong chưa?")
+            .setContentTitle("Task time is up")
+            .setContentText("$title — are you done?")
             .setContentIntent(open)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .addAction(0, "Đã xong", donePi)
-            .addAction(0, "Chưa xong", notDonePi)
+            .addAction(0, "Done", donePi)
+            .addAction(0, "Not done", notDonePi)
             .build()
         NotificationManagerCompat.from(context).notify(notifId(taskId, 2), notification)
     }

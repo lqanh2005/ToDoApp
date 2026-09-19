@@ -22,7 +22,7 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Tên công việc *">
+                android:hint="Task name *">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etTitle"
@@ -35,7 +35,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:hint="Mô tả &amp; ghi chú">
+                android:hint="Description &amp; notes">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etDescription"
@@ -50,7 +50,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Mức độ ưu tiên"
+                android:text="Priority"
                 android:textColor="@color/on_surface_variant"
                 android:textStyle="bold" />
 
@@ -66,28 +66,28 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:checked="true"
-                    android:text="Cao" />
+                    android:text="High" />
 
                 <RadioButton
                     android:id="@+id/rbTb"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Vừa" />
+                    android:text="Medium" />
 
                 <RadioButton
                     android:id="@+id/rbThap"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Thấp" />
+                    android:text="Low" />
             </RadioGroup>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Hạn hoàn thành"
+                android:text="Due date"
                 android:textColor="@color/on_surface_variant"
                 android:textStyle="bold" />
 
@@ -102,26 +102,26 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:checked="true"
-                    android:text="Hôm nay" />
+                    android:text="Today" />
 
                 <RadioButton
                     android:id="@+id/rbTomorrow"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Ngày mai" />
+                    android:text="Tomorrow" />
 
                 <RadioButton
                     android:id="@+id/rbWeekend"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cuối tuần" />
+                    android:text="This weekend" />
             </RadioGroup>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Thời gian thực hiện"
+                android:text="Time"
                 android:textColor="@color/on_surface_variant"
                 android:textStyle="bold" />
 
@@ -151,7 +151,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Giờ đã chọn"
+                        android:text="Selected time"
                         android:textColor="@color/on_surface_variant"
                         android:textSize="11sp" />
 
@@ -171,7 +171,7 @@
                     android:background="@drawable/bg_fab"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="8dp"
-                    android:text="Chọn giờ"
+                    android:text="Pick time"
                     android:textColor="@color/white"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -180,7 +180,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:text="Danh mục"
+                android:text="Category"
                 android:textColor="@color/on_surface_variant"
                 android:textStyle="bold" />
 
@@ -194,7 +194,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Tạo công việc ngay" />
+                android:text="Create task" />
         </LinearLayout>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

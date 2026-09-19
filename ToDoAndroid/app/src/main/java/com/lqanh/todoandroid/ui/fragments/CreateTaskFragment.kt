@@ -1,4 +1,4 @@
-package com.lqanh.todoandroid.ui.fragments
+﻿package com.lqanh.todoandroid.ui.fragments
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -25,10 +25,10 @@ class CreateTaskFragment : Fragment() {
 
     private var timeSlot = "14:30"
     private val categories = listOf(
-        Triple("work", "Công việc", "💼"),
-        Triple("personal", "Cá nhân", "👤"),
-        Triple("study", "Học tập", "📚"),
-        Triple("shopping", "Mua sắm", "🛒")
+        Triple("work", "Work", "💼"),
+        Triple("personal", "Personal", "👤"),
+        Triple("study", "Study", "📚"),
+        Triple("shopping", "Shopping", "🛒")
     )
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -55,7 +55,7 @@ class CreateTaskFragment : Fragment() {
             .setTimeFormat(TimeFormat.CLOCK_24H)
             .setHour(hour)
             .setMinute(minute)
-            .setTitleText("Chọn thời gian thực hiện")
+            .setTitleText("Pick a time")
             .build()
         picker.addOnPositiveButtonClickListener {
             timeSlot = "%02d:%02d".format(picker.hour, picker.minute)
@@ -67,7 +67,7 @@ class CreateTaskFragment : Fragment() {
     private fun save() {
         val title = binding.etTitle.text?.toString().orEmpty().trim()
         if (title.isEmpty()) {
-            Toast.makeText(requireContext(), "Vui lòng nhập tên công việc", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Please enter a task name", Toast.LENGTH_SHORT).show()
             return
         }
         val priority = when (binding.rgPriority.checkedRadioButtonId) {
@@ -81,9 +81,9 @@ class CreateTaskFragment : Fragment() {
             else -> "today"
         }
         val dueLabel = when (dueKey) {
-            "tomorrow" -> "Ngày mai"
-            "weekend" -> "Cuối tuần"
-            else -> "Hôm nay"
+            "tomorrow" -> "Tomorrow"
+            "weekend" -> "This weekend"
+            else -> "Today"
         }
         val cat = categories.getOrElse(binding.spinnerCategory.selectedItemPosition) { categories[0] }
         val task = Task(
@@ -97,7 +97,7 @@ class CreateTaskFragment : Fragment() {
             categoryLabel = cat.second,
             categoryEmoji = cat.third,
             dueDate = dueLabel,
-            dueTime = "$timeSlot (${if (dueKey == "today") "Hôm nay" else "Sắp tới"})",
+            dueTime = "$timeSlot (${if (dueKey == "today") "Today" else "Upcoming"})",
             reminder = "15",
             subtasks = emptyList()
         )

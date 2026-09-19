@@ -32,7 +32,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:background="@android:color/transparent"
-                android:hint="Tìm kiếm theo tên công việc..."
+                android:hint="Search by task name..."
                 android:inputType="text"
                 android:textColor="@color/on_surface"
                 android:textColorHint="@color/outline"
@@ -43,7 +43,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:padding="8dp"
-                android:text="Đóng"
+                android:text="Close"
                 android:textColor="@color/primary"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -74,7 +74,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:text="Hôm nay · 0/0"
+                    android:text="Today · 0/0"
                     android:textColor="@color/slate_700"
                     android:textSize="12sp"
                     android:textStyle="bold" />
@@ -126,48 +126,37 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:checked="true"
-                        android:text="Tất cả" />
+                        android:text="All" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipWork"
                         style="@style/Widget.ToDoList.Chip"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Công việc" />
+                        android:text="Work" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipPersonal"
                         style="@style/Widget.ToDoList.Chip"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Cá nhân" />
+                        android:text="Personal" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipStudy"
                         style="@style/Widget.ToDoList.Chip"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Học tập" />
+                        android:text="Study" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipShopping"
                         style="@style/Widget.ToDoList.Chip"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Mua sắm" />
+                        android:text="Shopping" />
                 </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
-
-            <ImageButton
-                android:id="@+id/btnSort"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="8dp"
-                android:background="@drawable/bg_sort_btn"
-                android:contentDescription="@string/sort_tasks"
-                android:padding="6dp"
-                android:scaleType="centerInside"
-                android:src="@drawable/ic_swap_vert" />
         </LinearLayout>
 
         <androidx.recyclerview.widget.RecyclerView
@@ -185,7 +174,7 @@
             android:background="@drawable/bg_task_card"
             android:gravity="center"
             android:padding="32dp"
-            android:text="Không có công việc nào trong mục này"
+            android:text="No tasks in this category"
             android:textColor="@color/on_surface_variant"
             android:visibility="gone" />
     </LinearLayout>

@@ -1,7 +1,11 @@
-package com.lqanh.todoandroid.ui.fragments
+﻿package com.lqanh.todoandroid.ui.fragments
 
 import android.app.Dialog
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,13 +14,15 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageButton
-import android.widget.PopupMenu
+import android.widget.LinearLayout
+import android.widget.PopupWindow
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.activityViewModels
-import androidx.fragment.app.setFragmentResultListener
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -40,12 +46,12 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
     private val binding get() = _binding!!
     private val viewModel: TaskViewModel by activityViewModels()
 
-    private val categories = listOf(
-        Triple("none", "No Category", ""),
-        Triple("work", "Công việc", "💼"),
-        Triple("personal", "Cá nhân", "👤"),
-        Triple("study", "Học tập", "📚"),
-        Triple("shopping", "Mua sắm", "🛒")
+    private val categories = mutableListOf(
+        Triple("none", "No category", ""),
+        Triple("work", "Work", ""),
+        Triple("personal", "Personal", ""),
+        Triple("study", "Study", ""),
+        Triple("shopping", "Shopping", "")
     )
 
     private var categoryIndex = 0
@@ -55,6 +61,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
     private var timeMinute = 0
     private var reminderValue = "15"
     private val subtaskInputs = mutableListOf<EditText>()
+    private var categoryPopup: PopupWindow? = null
 
     override fun getTheme(): Int = R.style.ThemeOverlay_ToDo_BottomSheetDialog
 
@@ -88,7 +95,10 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         updateCategoryLabel()
         updateSubmitEnabled()
 
-        setFragmentResultListener(DateScheduleDialogFragment.REQUEST_KEY) { _, bundle ->
+        childFragmentManager.setFragmentResultListener(
+            DateScheduleDialogFragment.REQUEST_KEY,
+            viewLifecycleOwner
+        ) { _, bundle ->
             val noDate = bundle.getBoolean(DateScheduleDialogFragment.KEY_NO_DATE)
             if (noDate) {
                 dueMillis = null
@@ -99,6 +109,9 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
                 if (hasTime) {
                     timeHour = bundle.getInt(DateScheduleDialogFragment.KEY_HOUR)
                     timeMinute = bundle.getInt(DateScheduleDialogFragment.KEY_MINUTE)
+                } else {
+                    timeHour = 17
+                    timeMinute = 0
                 }
             }
             val rem = bundle.getString(DateScheduleDialogFragment.KEY_REMINDER).orEmpty()
@@ -119,7 +132,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         binding.btnDate.setOnClickListener { showDatePicker() }
         binding.btnSubtask.setOnClickListener { addInlineSubtask() }
         binding.btnMic.setOnClickListener {
-            Toast.makeText(requireContext(), "Nhập giọng nói sẽ sớm có", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Voice input coming soon", Toast.LENGTH_SHORT).show()
         }
         binding.btnSubmit.setOnClickListener { save() }
         updateSubtaskButton()
@@ -147,17 +160,76 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
     }
 
     private fun showCategoryMenu() {
-        PopupMenu(requireContext(), binding.btnCategory).apply {
-            categories.forEachIndexed { index, item ->
-                menu.add(0, index, index, item.second)
-            }
-            setOnMenuItemClickListener { item ->
-                categoryIndex = item.itemId
-                updateCategoryLabel()
-                true
-            }
-            show()
+        categoryPopup?.dismiss()
+
+        val content = layoutInflater.inflate(R.layout.popup_category_menu, null)
+        val list = content.findViewById<LinearLayout>(R.id.categoryList)
+        val btnAddTag = content.findViewById<TextView>(R.id.btnAddTag)
+
+        val popup = PopupWindow(
+            content,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            true
+        ).apply {
+            setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            elevation = 12f
+            isOutsideTouchable = true
+            setOnDismissListener { categoryPopup = null }
         }
+        categoryPopup = popup
+
+        categories.forEachIndexed { index, item ->
+            val row = layoutInflater.inflate(R.layout.item_category_option, list, false) as TextView
+            row.text = item.second
+            if (index == categoryIndex) {
+                row.setTextColor(ContextCompat.getColor(requireContext(), R.color.primary))
+                row.setTypeface(row.typeface, Typeface.BOLD)
+            }
+            row.setOnClickListener {
+                categoryIndex = index
+                updateCategoryLabel()
+                popup.dismiss()
+            }
+            list.addView(row)
+        }
+
+        btnAddTag.setOnClickListener {
+            popup.dismiss()
+            showAddTagDialog()
+        }
+
+        content.measure(
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        val yOff = -(content.measuredHeight + binding.btnCategory.height +
+            (8 * resources.displayMetrics.density).toInt())
+        popup.showAsDropDown(binding.btnCategory, 0, yOff, Gravity.START)
+    }
+
+    private fun showAddTagDialog() {
+        val input = EditText(requireContext()).apply {
+            hint = "Tag name"
+            setPadding(48, 32, 48, 32)
+            setSingleLine(true)
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle("Add tag")
+            .setView(input)
+            .setPositiveButton("Add") { _, _ ->
+                val name = input.text?.toString()?.trim().orEmpty()
+                if (name.isEmpty()) {
+                    Toast.makeText(requireContext(), "Enter a tag name", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                val key = "tag-${System.currentTimeMillis()}"
+                categories.add(Triple(key, name, ""))
+                categoryIndex = categories.lastIndex
+                updateCategoryLabel()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
     }
 
     private fun updateSubtaskButton() {
@@ -216,36 +288,51 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
     private fun save() {
         val title = binding.etTitle.text?.toString().orEmpty().trim()
         if (title.isEmpty()) {
-            Toast.makeText(requireContext(), "Vui lòng nhập tên công việc", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Please enter a task name", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val cat = categories[categoryIndex]
-        val dueLabel = formatDueLabel(dueMillis, hasTime, timeHour, timeMinute)
-        val category = if (cat.first == "none") "personal" else cat.first
-        val categoryLabel = if (cat.first == "none") "Cá nhân" else cat.second
-        val categoryEmoji = cat.third.ifBlank { "📌" }
+        try {
+            val cat = categories.getOrElse(categoryIndex) { categories.first() }
+            val dueLabel = formatDueLabel(dueMillis, hasTime, timeHour, timeMinute)
+            val category = when {
+                cat.first == "none" -> "personal"
+                cat.first.startsWith("tag-") -> "personal"
+                else -> cat.first
+            }
+            val categoryLabel = if (cat.first == "none") "Personal" else cat.second
+            val categoryEmoji = when (cat.first) {
+                "work" -> "💼"
+                "personal" -> "👤"
+                "study" -> "📚"
+                "shopping" -> "🛒"
+                else -> "📌"
+            }
 
-        val task = Task(
-            id = "task-${System.currentTimeMillis()}",
-            code = "#${Random.nextInt(100, 999)}",
-            title = title,
-            description = null,
-            status = TaskStatus.TODO,
-            priority = PriorityLevel.TB,
-            category = category,
-            categoryLabel = categoryLabel,
-            categoryEmoji = categoryEmoji,
-            dueDate = dueLabel.ifBlank { "" },
-            dueTime = dueLabel.ifBlank { "" },
-            dueAtMillis = dueMillis?.let { TaskDateUtils.startOfDay(it) },
-            startAtMillis = TaskDateUtils.buildStartEnd(dueMillis, hasTime, timeHour, timeMinute).first,
-            endAtMillis = TaskDateUtils.buildStartEnd(dueMillis, hasTime, timeHour, timeMinute).second,
-            reminder = reminderValue,
-            subtasks = collectSubtasks()
-        )
-        viewModel.createTask(task)
-        dismiss()
+            val (start, end) = TaskDateUtils.buildStartEnd(dueMillis, hasTime, timeHour, timeMinute)
+            val task = Task(
+                id = "task-${System.currentTimeMillis()}",
+                code = "#${Random.nextInt(100, 999)}",
+                title = title,
+                description = null,
+                status = TaskStatus.TODO,
+                priority = PriorityLevel.TB,
+                category = category,
+                categoryLabel = categoryLabel,
+                categoryEmoji = categoryEmoji,
+                dueDate = dueLabel.ifBlank { "" },
+                dueTime = dueLabel.ifBlank { "" },
+                dueAtMillis = dueMillis?.let { TaskDateUtils.startOfDay(it) },
+                startAtMillis = start,
+                endAtMillis = end,
+                reminder = reminderValue,
+                subtasks = collectSubtasks()
+            )
+            viewModel.createTask(task)
+            dismissAllowingStateLoss()
+        } catch (e: Exception) {
+            Toast.makeText(requireContext(), "Could not create task: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun formatDueLabel(
@@ -270,9 +357,9 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         }
         val tomorrow = (today.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }
         val datePart = when (selected.timeInMillis) {
-            today.timeInMillis -> "hôm nay"
-            tomorrow.timeInMillis -> "Ngày mai"
-            else -> SimpleDateFormat("dd 'Th'MM", Locale("vi")).format(Date(millis))
+            today.timeInMillis -> "today"
+            tomorrow.timeInMillis -> "Tomorrow"
+            else -> SimpleDateFormat("MMM d", Locale.ENGLISH).format(Date(millis))
         }
         return if (withTime) {
             "%02d:%02d · %s".format(hour, minute, datePart)
@@ -282,6 +369,8 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
     }
 
     override fun onDestroyView() {
+        categoryPopup?.dismiss()
+        categoryPopup = null
         super.onDestroyView()
         _binding = null
     }
