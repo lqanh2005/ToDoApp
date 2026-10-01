@@ -21,6 +21,7 @@ import com.lqanh.todoandroid.ui.widgets.SwipeRevealLayout
 import java.util.Calendar
 import java.util.regex.Pattern
 
+// Adapter hiển thị danh sách task dạng thẻ; scheduleStyle = true dùng giao diện gọn cho màn Lịch trình.
 class TaskAdapter(
     private val onToggleComplete: (String) -> Unit,
     private val onChangeStatus: (String, TaskStatus) -> Unit,
@@ -31,16 +32,23 @@ class TaskAdapter(
     private val scheduleStyle: Boolean = false
 ) : ListAdapter<Task, RecyclerView.ViewHolder>(Diff) {
 
+    // So sánh task cũ/mới để RecyclerView chỉ vẽ lại những dòng thay đổi.
     object Diff : DiffUtil.ItemCallback<Task>() {
+        // Cùng id thì là cùng một task.
         override fun areItemsTheSame(oldItem: Task, newItem: Task) = oldItem.id == newItem.id
+        // Nội dung giống hệt thì không cần vẽ lại.
         override fun areContentsTheSame(oldItem: Task, newItem: Task) = oldItem == newItem
     }
 
+    // ViewHolder cho thẻ task đầy đủ (item_task.xml).
     class FullVH(val binding: ItemTaskBinding) : RecyclerView.ViewHolder(binding.root)
+    // ViewHolder cho thẻ task gọn (item_schedule_task.xml).
     class ScheduleVH(val binding: ItemScheduleTaskBinding) : RecyclerView.ViewHolder(binding.root)
 
+    // Chọn kiểu giao diện dòng theo scheduleStyle.
     override fun getItemViewType(position: Int): Int = if (scheduleStyle) TYPE_SCHEDULE else TYPE_FULL
 
+    // Tạo ViewHolder tương ứng với kiểu giao diện.
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return if (viewType == TYPE_SCHEDULE) {
@@ -50,6 +58,7 @@ class TaskAdapter(
         }
     }
 
+    // Đổ dữ liệu task vào ViewHolder.
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val task = getItem(position)
         when (holder) {
@@ -58,6 +67,7 @@ class TaskAdapter(
         }
     }
 
+    // Hiển thị thẻ task gọn: tiêu đề, giờ, màu theo trạng thái, checkbox và các nút khi vuốt.
     private fun bindSchedule(holder: ScheduleVH, task: Task) {
         val b = holder.binding
         val ctx = b.root.context
@@ -94,7 +104,7 @@ class TaskAdapter(
             done -> R.color.task_bg_done to R.color.task_stroke_done
             doing -> R.color.task_bg_doing to R.color.task_stroke_doing
             notDone -> R.color.task_bg_not_done to R.color.task_stroke_not_done
-            else -> R.color.white to R.color.slate_100
+            else -> R.color.card_bg to R.color.slate_100
         }
         val density = ctx.resources.displayMetrics.density
         b.foregroundCard.background = GradientDrawable().apply {
@@ -132,6 +142,7 @@ class TaskAdapter(
         }
     }
 
+    // Hiển thị thẻ task đầy đủ: tiêu đề, mô tả, nhãn trạng thái, thanh màu, menu và các nút khi vuốt.
     private fun bindFull(holder: FullVH, task: Task) {
         val b = holder.binding
         val ctx = b.root.context
@@ -178,7 +189,7 @@ class TaskAdapter(
             done -> Triple(R.color.task_bg_done, R.color.task_stroke_done, R.color.status_done)
             doing -> Triple(R.color.task_bg_doing, R.color.task_stroke_doing, R.color.status_doing)
             notDone -> Triple(R.color.task_bg_not_done, R.color.task_stroke_not_done, R.color.status_not_done)
-            else -> Triple(R.color.white, R.color.slate_100, R.color.tertiary)
+            else -> Triple(R.color.card_bg, R.color.slate_100, R.color.tertiary)
         }
         val density = ctx.resources.displayMetrics.density
         b.foregroundCard.background = GradientDrawable().apply {
@@ -268,6 +279,7 @@ class TaskAdapter(
         }
     }
 
+    // Tô màu chữ và icon của nút trạng thái.
     private fun applyStatusTint(b: ItemTaskBinding, colorRes: Int) {
         val color = ContextCompat.getColor(b.root.context, colorRes)
         b.tvStart.setTextColor(color)
@@ -278,6 +290,7 @@ class TaskAdapter(
         }
     }
 
+    // Hiển thị dòng thông tin phụ: giờ, icon nhắc nhở, số việc con đã xong/tổng.
     private fun bindMetaRow(
         timeView: android.widget.TextView,
         reminderView: View,
@@ -303,11 +316,13 @@ class TaskAdapter(
         metaRow.isVisible = timeText != null || hasReminder || hasSub
     }
 
+    // Task có bật nhắc nhở không (reminder khác rỗng và khác "0").
     private fun hasReminder(task: Task): Boolean {
         val rem = task.reminder.trim()
         return rem.isNotEmpty() && rem != "0"
     }
 
+    // Lấy giờ bắt đầu của task dạng HH:mm; không có thì trả về null.
     private fun formatScheduleTime(task: Task): String? {
         task.startAtMillis?.let { millis ->
             val cal = Calendar.getInstance().apply { timeInMillis = millis }
@@ -333,6 +348,7 @@ class TaskAdapter(
         private const val TYPE_SCHEDULE = 1
         private val TIME_PATTERN = Pattern.compile("(\\d{1,2}):(\\d{2})")
 
+        // Đóng dòng đang được vuốt mở (nếu có).
         fun closeOpenSwipe() = SwipeRevealLayout.closeOpen()
     }
 }

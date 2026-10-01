@@ -26,8 +26,12 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.lqanh.todoandroid.data.AppLanguage
 import com.lqanh.todoandroid.data.NavigationTab
+import com.lqanh.todoandroid.data.SettingsRepository
+import com.lqanh.todoandroid.data.ThemeMode
 import com.lqanh.todoandroid.databinding.ActivityMainBinding
+import com.lqanh.todoandroid.databinding.DialogSettingsBinding
 import com.lqanh.todoandroid.notify.TaskAlarmReceiver
 import com.lqanh.todoandroid.notify.TaskNotifier
 import com.lqanh.todoandroid.ui.AppUiState
@@ -38,16 +42,20 @@ import com.lqanh.todoandroid.ui.fragments.TaskDetailFragment
 import com.lqanh.todoandroid.ui.fragments.TasksFragment
 import kotlinx.coroutines.launch
 
+// Activity duy nhất của app: chứa header, bottom navigation, nút thêm task và vùng hiển thị các Fragment.
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private val viewModel: TaskViewModel by viewModels()
 
+    // Launcher xin quyền gửi thông báo (Android 13+).
     private val requestNotifPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { }
 
+    // Nhận broadcast khi task bị thay đổi từ nền (báo thức/nút trên thông báo) để tải lại dữ liệu.
     private val tasksChangedReceiver = object : BroadcastReceiver() {
+        // Đọc lại task từ SQLite để giao diện khớp với thay đổi vừa xảy ra ở nền.
         override fun onReceive(context: Context?, intent: Intent?) {
             viewModel.reloadFromStorage()
         }
@@ -56,6 +64,7 @@ class MainActivity : AppCompatActivity() {
     private var lastScreenKey: String? = null
     private var lastChildScreen: Boolean? = null
 
+    // Khởi tạo giao diện, gắn sự kiện cho các nút, xử lý nút Back và lắng nghe trạng thái từ ViewModel để vẽ lại màn hình.
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -83,10 +92,10 @@ class MainActivity : AppCompatActivity() {
         binding.fabAdd.setOnClickListener { showCreateTaskSheet() }
         binding.btnBack.setOnClickListener { viewModel.closeChild() }
         binding.btnMenu.setOnClickListener { showMenu() }
-        binding.btnMenu.isVisible = false
         binding.btnBack.isVisible = false
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            // Đang ở màn chi tiết thì quay về danh sách, ngược lại để hệ thống xử lý (thoát app).
             override fun handleOnBackPressed() {
                 if (viewModel.uiState.value.isChildScreen) {
                     viewModel.closeChild()
@@ -103,20 +112,20 @@ class MainActivity : AppCompatActivity() {
                 launch {
                     viewModel.completionPrompt.collect { task ->
                         AlertDialog.Builder(this@MainActivity)
-                            .setTitle("Task time is up")
-                            .setMessage("\"${task.title}\" has ended.\nHave you completed it?")
-                            .setPositiveButton("Done") { _, _ ->
+                            .setTitle(R.string.completion_title)
+                            .setMessage(getString(R.string.completion_message, task.title))
+                            .setPositiveButton(R.string.completion_done) { _, _ ->
                                 viewModel.resolveCompletion(task.id, true)
                             }
-                            .setNegativeButton("Not done") { _, _ ->
+                            .setNegativeButton(R.string.completion_not_done) { _, _ ->
                                 viewModel.resolveCompletion(task.id, false)
                             }
-                            .setNeutralButton("Later", null)
+                            .setNeutralButton(R.string.completion_later, null)
                             .show()
                     }
                 }
                 viewModel.uiState.collect { state ->
-                    binding.tvTitle.text = state.headerTitle
+                    binding.tvTitle.setText(state.headerTitleRes)
 
                     if (lastChildScreen != state.isChildScreen) {
                         val animate = lastChildScreen != null
@@ -140,6 +149,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Đăng ký nhận broadcast thay đổi task và tải lại dữ liệu mỗi khi app hiện lên.
     override fun onStart() {
         super.onStart()
         val filter = IntentFilter(TaskAlarmReceiver.ACTION_TASKS_CHANGED)
@@ -151,11 +161,13 @@ class MainActivity : AppCompatActivity() {
         viewModel.reloadFromStorage()
     }
 
+    // Hủy đăng ký broadcast khi app bị ẩn.
     override fun onStop() {
         super.onStop()
         runCatching { unregisterReceiver(tasksChangedReceiver) }
     }
 
+    // Xin quyền thông báo nếu chạy trên Android 13+ và chưa được cấp.
     private fun maybeRequestNotificationPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
@@ -165,22 +177,84 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Mở bottom sheet tạo task mới (không mở trùng nếu đang hiển thị).
     private fun showCreateTaskSheet() {
         if (supportFragmentManager.findFragmentByTag(CreateTaskBottomSheet.TAG) != null) return
         CreateTaskBottomSheet().show(supportFragmentManager, CreateTaskBottomSheet.TAG)
     }
 
+    // Menu ở góc phải header: Tìm kiếm và Cài đặt.
     private fun showMenu() {
         PopupMenu(this, binding.btnMenu).apply {
-            menu.add(0, 1, 0, "Search")
+            menu.add(0, MENU_SEARCH, 0, R.string.search)
+            menu.add(0, MENU_SETTINGS, 1, R.string.settings)
             setOnMenuItemClickListener { item ->
-                if (item.itemId == 1) viewModel.toggleSearch()
+                when (item.itemId) {
+                    MENU_SEARCH -> viewModel.toggleSearch()
+                    MENU_SETTINGS -> showSettingsDialog()
+                }
                 true
             }
             show()
         }
     }
 
+    // Hộp thoại Cài đặt: chọn giao diện sáng/tối, ngôn ngữ, bật/tắt rung.
+    // Mỗi lựa chọn được lưu ngay vào SharedPreferences rồi áp dụng (đổi theme/ngôn ngữ sẽ tự vẽ lại màn hình).
+    private fun showSettingsDialog() {
+        val settings = SettingsRepository(this)
+        val dialogBinding = DialogSettingsBinding.inflate(layoutInflater)
+
+        dialogBinding.rgTheme.check(
+            when (settings.themeMode) {
+                ThemeMode.SYSTEM -> R.id.rbThemeSystem
+                ThemeMode.LIGHT -> R.id.rbThemeLight
+                ThemeMode.DARK -> R.id.rbThemeDark
+            }
+        )
+        dialogBinding.rgLanguage.check(
+            when (settings.language) {
+                AppLanguage.SYSTEM -> R.id.rbLangSystem
+                AppLanguage.VIETNAMESE -> R.id.rbLangVi
+                AppLanguage.ENGLISH -> R.id.rbLangEn
+            }
+        )
+        dialogBinding.switchHaptic.isChecked = viewModel.uiState.value.hapticEnabled
+
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.settings)
+            .setView(dialogBinding.root)
+            .setPositiveButton(R.string.settings_close, null)
+            .create()
+
+        dialogBinding.switchHaptic.setOnCheckedChangeListener { _, checked ->
+            viewModel.setHapticEnabled(checked)
+        }
+        dialogBinding.rgTheme.setOnCheckedChangeListener { _, checkedId ->
+            val mode = when (checkedId) {
+                R.id.rbThemeLight -> ThemeMode.LIGHT
+                R.id.rbThemeDark -> ThemeMode.DARK
+                else -> ThemeMode.SYSTEM
+            }
+            settings.themeMode = mode
+            dialog.dismiss()
+            SettingsRepository.applyTheme(mode)
+        }
+        dialogBinding.rgLanguage.setOnCheckedChangeListener { _, checkedId ->
+            val language = when (checkedId) {
+                R.id.rbLangVi -> AppLanguage.VIETNAMESE
+                R.id.rbLangEn -> AppLanguage.ENGLISH
+                else -> AppLanguage.SYSTEM
+            }
+            settings.language = language
+            dialog.dismiss()
+            SettingsRepository.applyLanguage(language)
+        }
+
+        dialog.show()
+    }
+
+    // Ẩn/hiện header, bottom navigation và nút thêm (có hiệu ứng trượt + mờ dần).
     private fun setChromeVisible(show: Boolean, animate: Boolean) {
         val views = listOf(binding.header, binding.headerDivider, binding.bottomNav, binding.fabAdd)
         if (!animate) {
@@ -223,6 +297,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Chuyển Fragment theo trạng thái: tab Công việc, tab Lịch trình hoặc màn Chi tiết task, kèm hiệu ứng chuyển cảnh.
     private fun renderScreen(state: AppUiState) {
         val key = state.selectedTaskId?.let { "detail:$it" } ?: "tab:${state.currentTab}"
         if (key == lastScreenKey) return
@@ -320,5 +395,7 @@ class MainActivity : AppCompatActivity() {
         private const val TAG_TASKS = "tab_tasks"
         private const val TAG_SCHEDULE = "tab_schedule"
         private const val TAG_DETAIL = "task_detail"
+        private const val MENU_SEARCH = 1
+        private const val MENU_SETTINGS = 2
     }
 }

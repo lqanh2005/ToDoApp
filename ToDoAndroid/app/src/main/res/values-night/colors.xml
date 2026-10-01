@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="card_bg">#1E293B</color>
+
+    <color name="primary_soft">#1E3A5F</color>
+    <color name="primary_border">#1E40AF</color>
+    <color name="blue_50">#1E3A5F</color>
+
+    <color name="surface">#0F172A</color>
+    <color name="on_surface">#E2E8F0</color>
+    <color name="on_surface_variant">#CBD5E1</color>
+    <color name="slate_700">#CBD5E1</color>
+    <color name="slate_500">#94A3B8</color>
+    <color name="slate_400">#64748B</color>
+    <color name="slate_200">#334155</color>
+    <color name="slate_100">#1E293B</color>
+    <color name="surface_container_low">#172033</color>
+    <color name="surface_container">#1E293B</color>
+    <color name="surface_container_high">#273449</color>
+    <color name="surface_container_highest">#334155</color>
+
+    <color name="task_bg_done">#14301F</color>
+    <color name="task_stroke_done">#166534</color>
+    <color name="task_bg_not_done">#3A2A0B</color>
+    <color name="task_stroke_not_done">#92400E</color>
+    <color name="task_bg_doing">#0F3029</color>
+    <color name="task_stroke_doing">#047857</color>
+
+    <color name="outline_variant">#475569</color>
+    <color name="chip_inactive_bg">#1E293B</color>
+    <color name="chip_count_inactive">#334155</color>
+</resources>

@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+// Hộp thoại chọn ngày (chọn nhanh hoặc từ lịch), giờ, nhắc nhở và lặp lại; trả kết quả qua Fragment Result.
 class DateScheduleDialogFragment : DialogFragment() {
 
     private var _binding: DialogDateScheduleBinding? = null
@@ -40,17 +41,20 @@ class DateScheduleDialogFragment : DialogFragment() {
     private var repeat: String? = null
     private var quickKey: String? = "today"
 
+    // Tạo dialog với nền trong suốt để thấy bo góc của layout.
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return super.onCreateDialog(savedInstanceState).apply {
             window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         }
     }
 
+    // Tạo view từ layout dialog_date_schedule.xml.
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = DialogDateScheduleBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    // Đặt kích thước dialog rộng 92% màn hình và căn giữa.
     override fun onStart() {
         super.onStart()
         dialog?.window?.setLayout(
@@ -60,6 +64,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         dialog?.window?.setGravity(Gravity.CENTER)
     }
 
+    // Khởi tạo ngày ban đầu, gắn sự kiện và nhận kết quả từ hộp thoại chọn giờ/nhắc nhở.
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         arguments?.getLong(ARG_INITIAL, -1L)?.takeIf { it > 0 }?.let {
             selectedDay = startOfDay(Calendar.getInstance().apply { timeInMillis = it })
@@ -132,6 +137,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         updateOptionLabels()
     }
 
+    // Gửi toàn bộ lựa chọn về màn hình gọi rồi đóng dialog.
     private fun finishDone() {
         setFragmentResult(
             REQUEST_KEY,
@@ -148,6 +154,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         dismiss()
     }
 
+    // Chọn nhanh: hôm nay, ngày mai, 3 ngày nữa, Chủ nhật này hoặc không có ngày.
     private fun selectQuick(key: String) {
         quickKey = key
         noDate = key == "none"
@@ -174,6 +181,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         renderCalendar()
     }
 
+    // Từ ngày đang chọn, xác định chip chọn nhanh tương ứng (nếu có).
     private fun syncQuickFromSelected() {
         val sel = selectedDay ?: run {
             quickKey = "none"
@@ -198,6 +206,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         }
     }
 
+    // Tô sáng chip chọn nhanh đang được chọn.
     private fun updateQuickChips() {
         listOf(
             binding.chipToday to "today",
@@ -210,6 +219,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         }
     }
 
+    // Vẽ lưới 42 ô ngày của tháng đang xem; bấm vào ô để chọn ngày.
     private fun renderCalendar() {
         binding.tvMonthYear.text = SimpleDateFormat("MMMM yyyy", Locale.ENGLISH).format(displayMonth.time)
         binding.gridDays.removeAllViews()
@@ -267,6 +277,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         }
     }
 
+    // Mở hộp thoại chọn giờ.
     private fun pickTime() {
         if (childFragmentManager.findFragmentByTag(SetTimeDialogFragment.TAG) != null) return
         SetTimeDialogFragment
@@ -278,6 +289,7 @@ class DateScheduleDialogFragment : DialogFragment() {
             .show(childFragmentManager, SetTimeDialogFragment.TAG)
     }
 
+    // Mở hộp thoại chọn nhắc nhở.
     private fun pickReminder() {
         if (childFragmentManager.findFragmentByTag(ReminderDialogFragment.TAG) != null) return
         ReminderDialogFragment
@@ -289,6 +301,7 @@ class DateScheduleDialogFragment : DialogFragment() {
             .show(childFragmentManager, ReminderDialogFragment.TAG)
     }
 
+    // Hiện popup chọn kiểu lặp lại (không, hằng ngày, hằng tuần, hằng tháng).
     private fun pickRepeat() {
         val options = listOf(
             null to "No",
@@ -340,6 +353,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         popup.showAsDropDown(anchor, xOff, (4 * resources.displayMetrics.density).toInt(), Gravity.START)
     }
 
+    // Đặt nhắc nhở mặc định 5 phút trước khi vừa chọn giờ.
     private fun applyDefaultReminder() {
         reminderKey = ReminderDialogFragment.OPTION_5_MIN
         reminder = "5 min"
@@ -347,12 +361,14 @@ class DateScheduleDialogFragment : DialogFragment() {
         reminderManual = false
     }
 
+    // Xóa nhắc nhở.
     private fun clearReminder() {
         reminder = null
         reminderKey = null
         reminderCustom = null
     }
 
+    // Số phút nhắc trước tương ứng với lựa chọn hiện tại.
     private fun reminderOffsetMinutes(): Int? = when (reminderKey) {
         ReminderDialogFragment.OPTION_AT_TASK -> 0
         ReminderDialogFragment.OPTION_5_MIN -> 5
@@ -361,6 +377,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         else -> null
     }
 
+    // Chuỗi hiển thị nhắc nhở: giờ nhắc cụ thể nếu tính được, ngược lại là nhãn lựa chọn.
     private fun formatReminderDisplay(): String? {
         val key = reminderKey ?: return null
         val h = timeHour
@@ -385,6 +402,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         }
     }
 
+    // Nhãn nhắc nhở gửi về màn hình gọi ("5 min", "1 day"...).
     private fun reminderResultLabel(): String {
         return when (reminderKey) {
             null -> ""
@@ -398,6 +416,7 @@ class DateScheduleDialogFragment : DialogFragment() {
         }
     }
 
+    // Cập nhật chữ và màu của các dòng Giờ, Nhắc nhở, Lặp lại.
     private fun updateOptionLabels() {
         if (timeHour != null && timeMinute != null) {
             binding.tvTimeValue.text = "%02d:%02d".format(timeHour, timeMinute)
@@ -424,11 +443,13 @@ class DateScheduleDialogFragment : DialogFragment() {
         )
     }
 
+    // Kiểm tra hai Calendar có cùng ngày không.
     private fun isSameDay(a: Calendar, b: Calendar): Boolean {
         return a.get(Calendar.YEAR) == b.get(Calendar.YEAR) &&
             a.get(Calendar.DAY_OF_YEAR) == b.get(Calendar.DAY_OF_YEAR)
     }
 
+    // Giải phóng binding khi view bị hủy.
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -446,12 +467,14 @@ class DateScheduleDialogFragment : DialogFragment() {
         const val KEY_REPEAT = "repeat"
         private const val ARG_INITIAL = "initial"
 
+        // Tạo dialog với ngày ban đầu được chọn sẵn.
         fun newInstance(initialMillis: Long): DateScheduleDialogFragment {
             return DateScheduleDialogFragment().apply {
                 arguments = bundleOf(ARG_INITIAL to initialMillis)
             }
         }
 
+        // Đưa Calendar về 00:00:00 của ngày đó.
         private fun startOfDay(cal: Calendar): Calendar = cal.apply {
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
@@ -459,6 +482,7 @@ class DateScheduleDialogFragment : DialogFragment() {
             set(Calendar.MILLISECOND, 0)
         }
 
+        // Đưa Calendar về ngày 1 của tháng lúc 00:00:00.
         private fun startOfMonth(cal: Calendar): Calendar = startOfDay(cal).apply {
             set(Calendar.DAY_OF_MONTH, 1)
         }

@@ -6,21 +6,19 @@ import android.content.Intent
 import com.lqanh.todoandroid.data.TaskRepository
 import com.lqanh.todoandroid.data.TaskStatus
 
+// Nhận báo thức đã đặt bởi TaskAlarmScheduler khi task đến giờ bắt đầu hoặc kết thúc.
 class TaskAlarmReceiver : BroadcastReceiver() {
+    // Đến giờ bắt đầu: chuyển task sang DOING. Đến giờ kết thúc: đánh dấu quá hạn, chờ xác nhận. Sau đó gửi thông báo và báo cho app tải lại.
     override fun onReceive(context: Context, intent: Intent?) {
         val taskId = intent?.getStringExtra(TaskAlarmScheduler.EXTRA_TASK_ID) ?: return
         val title = intent.getStringExtra(TaskAlarmScheduler.EXTRA_TASK_TITLE).orEmpty()
         val repo = TaskRepository(context)
-        val tasks = repo.loadTasks().toMutableList()
-        val index = tasks.indexOfFirst { it.id == taskId }
-        if (index < 0) return
-        val task = tasks[index]
+        val task = repo.loadTasks().firstOrNull { it.id == taskId } ?: return
 
         when (intent.action) {
             TaskAlarmScheduler.ACTION_START -> {
                 if (task.status == TaskStatus.TODO) {
-                    tasks[index] = task.copy(status = TaskStatus.DOING)
-                    repo.saveTasks(tasks)
+                    repo.saveTask(task.copy(status = TaskStatus.DOING))
                     TaskNotifier.notifyTaskStarted(context, taskId, title.ifBlank { task.title })
                     context.sendBroadcast(
                         Intent(ACTION_TASKS_CHANGED).setPackage(context.packageName)
@@ -29,12 +27,13 @@ class TaskAlarmReceiver : BroadcastReceiver() {
             }
             TaskAlarmScheduler.ACTION_END -> {
                 if (task.status != TaskStatus.DONE) {
-                    tasks[index] = task.copy(
-                        status = if (task.status == TaskStatus.TODO) TaskStatus.DOING else task.status,
-                        awaitingCompletion = true,
-                        isOverdue = true
+                    repo.saveTask(
+                        task.copy(
+                            status = if (task.status == TaskStatus.TODO) TaskStatus.DOING else task.status,
+                            awaitingCompletion = true,
+                            isOverdue = true
+                        )
                     )
-                    repo.saveTasks(tasks)
                     TaskNotifier.notifyTaskEnded(context, taskId, title.ifBlank { task.title })
                     context.sendBroadcast(
                         Intent(ACTION_TASKS_CHANGED).setPackage(context.packageName)

@@ -35,6 +35,7 @@ import java.util.Locale
 import java.util.regex.Pattern
 import kotlinx.coroutines.launch
 
+// Màn hình chi tiết một task: sửa tiêu đề, danh mục, việc con, lịch, ghi chú; xóa task.
 class TaskDetailFragment : Fragment() {
 
     private var _binding: FragmentTaskDetailBinding? = null
@@ -53,16 +54,19 @@ class TaskDetailFragment : Fragment() {
         Triple("shopping", "Shopping", "🛒")
     )
 
+    // Lấy id task được truyền vào qua arguments.
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         taskId = requireArguments().getString(ARG_TASK_ID).orEmpty()
     }
 
+    // Tạo view từ layout fragment_task_detail.xml.
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentTaskDetailBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    // Gắn sự kiện, lưu tiêu đề khi gõ, nhận kết quả sửa lịch và lắng nghe task từ ViewModel.
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding.btnBack.setOnClickListener { viewModel.closeChild() }
         binding.btnMore.setOnClickListener { showMoreMenu() }
@@ -143,6 +147,7 @@ class TaskDetailFragment : Fragment() {
         }
     }
 
+    // Đổ toàn bộ thông tin task lên giao diện.
     private fun bindTask(task: Task) {
         current = task
         updatingUi = true
@@ -175,6 +180,7 @@ class TaskDetailFragment : Fragment() {
         updatingUi = false
     }
 
+    // Vẽ danh sách việc con; bấm checkbox để đánh dấu xong/chưa xong.
     private fun bindSubtasks(task: Task) {
         binding.subtaskContainer.removeAllViews()
         task.subtasks.forEach { sub ->
@@ -208,6 +214,7 @@ class TaskDetailFragment : Fragment() {
         }
     }
 
+    // Hiển thị ngày hết hạn, giờ và thông tin nhắc nhở.
     private fun bindSchedule(task: Task) {
         val day = TaskDateUtils.resolveDueDayMillis(task)
         binding.tvDueDate.text = if (day == null) {
@@ -231,6 +238,7 @@ class TaskDetailFragment : Fragment() {
         }
     }
 
+    // Tính giờ nhắc = giờ task trừ số phút nhắc trước.
     private fun reminderAtLabel(time: String, reminder: String): String {
         val parts = time.split(":")
         val hour = parts.getOrNull(0)?.toIntOrNull() ?: return time
@@ -244,6 +252,7 @@ class TaskDetailFragment : Fragment() {
         return "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
     }
 
+    // Lấy giờ bắt đầu của task dạng HH:mm; không có thì trả về null.
     private fun extractTime(task: Task): String? {
         TaskDateUtils.resolveStartAtMillis(task)?.let {
             val cal = Calendar.getInstance().apply { timeInMillis = it }
@@ -258,6 +267,7 @@ class TaskDetailFragment : Fragment() {
         return null
     }
 
+    // Mở hộp thoại chọn ngày/giờ/nhắc nhở cho task.
     private fun openScheduleEditor() {
         val task = current ?: return
         if (childFragmentManager.findFragmentByTag(DateScheduleDialogFragment.TAG) != null) return
@@ -268,6 +278,7 @@ class TaskDetailFragment : Fragment() {
             .show(childFragmentManager, DateScheduleDialogFragment.TAG)
     }
 
+    // Menu thêm (nút ba chấm): xóa task.
     private fun showMoreMenu() {
         PopupMenu(requireContext(), binding.btnMore).apply {
             menu.add(0, 1, 0, "Delete task")
@@ -282,6 +293,7 @@ class TaskDetailFragment : Fragment() {
         }
     }
 
+    // Popup chọn danh mục cho task.
     private fun showCategoryMenu() {
         categoryPopup?.dismiss()
         val content = layoutInflater.inflate(R.layout.popup_category_menu, null)
@@ -337,6 +349,7 @@ class TaskDetailFragment : Fragment() {
         popup.showAsDropDown(binding.btnCategory, 0, 8, Gravity.START)
     }
 
+    // Hộp thoại nhập tên việc con mới.
     private fun promptAddSubtask() {
         val input = EditText(requireContext()).apply {
             hint = "Sub-task name"
@@ -357,6 +370,7 @@ class TaskDetailFragment : Fragment() {
             .show()
     }
 
+    // Hộp thoại sửa ghi chú của task.
     private fun promptNotes() {
         val task = current ?: return
         val input = EditText(requireContext()).apply {
@@ -376,6 +390,7 @@ class TaskDetailFragment : Fragment() {
             .show()
     }
 
+    // Tạo nhãn hạn chót dạng "HH:mm · today/Tomorrow/MMM d".
     private fun formatDueLabel(
         millis: Long?,
         withTime: Boolean,
@@ -405,6 +420,7 @@ class TaskDetailFragment : Fragment() {
         return if (withTime) "%02d:%02d · %s".format(hour, minute, datePart) else datePart
     }
 
+    // Đóng popup đang mở và giải phóng binding.
     override fun onDestroyView() {
         categoryPopup?.dismiss()
         categoryPopup = null
@@ -417,6 +433,7 @@ class TaskDetailFragment : Fragment() {
         private const val ARG_TASK_ID = "task_id"
         private val TIME_PATTERN = Pattern.compile("(\\d{1,2}):(\\d{2})")
 
+        // Tạo fragment kèm id task cần hiển thị.
         fun newInstance(taskId: String) = TaskDetailFragment().apply {
             arguments = Bundle().apply { putString(ARG_TASK_ID, taskId) }
         }

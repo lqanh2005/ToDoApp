@@ -17,6 +17,7 @@ import com.lqanh.todoandroid.databinding.FragmentCreateTaskBinding
 import com.lqanh.todoandroid.ui.TaskViewModel
 import kotlin.random.Random
 
+// Màn hình tạo task dạng form đầy đủ (tiêu đề, mô tả, ưu tiên, hạn, giờ, danh mục).
 class CreateTaskFragment : Fragment() {
 
     private var _binding: FragmentCreateTaskBinding? = null
@@ -31,11 +32,13 @@ class CreateTaskFragment : Fragment() {
         Triple("shopping", "Shopping", "🛒")
     )
 
+    // Tạo view từ layout fragment_create_task.xml.
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentCreateTaskBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    // Hiển thị giờ mặc định, nạp danh mục vào spinner và gắn sự kiện nút.
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding.tvTime.text = timeSlot
         binding.spinnerCategory.adapter = ArrayAdapter(
@@ -48,6 +51,7 @@ class CreateTaskFragment : Fragment() {
         binding.btnSave.setOnClickListener { save() }
     }
 
+    // Mở đồng hồ chọn giờ (24h).
     private fun showTimePicker() {
         val hour = timeSlot.substringBefore(":").toIntOrNull() ?: 14
         val minute = timeSlot.substringAfter(":").toIntOrNull() ?: 30
@@ -64,6 +68,7 @@ class CreateTaskFragment : Fragment() {
         picker.show(parentFragmentManager, "time_picker")
     }
 
+    // Kiểm tra tiêu đề, tạo Task từ dữ liệu form và gửi cho ViewModel.
     private fun save() {
         val title = binding.etTitle.text?.toString().orEmpty().trim()
         if (title.isEmpty()) {
@@ -104,6 +109,7 @@ class CreateTaskFragment : Fragment() {
         viewModel.createTask(task)
     }
 
+    // Giải phóng binding khi view bị hủy.
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

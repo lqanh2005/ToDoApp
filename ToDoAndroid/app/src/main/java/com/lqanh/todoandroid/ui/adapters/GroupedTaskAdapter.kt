@@ -22,6 +22,7 @@ import java.util.Date
 import java.util.Locale
 import java.util.regex.Pattern
 
+// Các nhóm trong danh sách: quá hạn, hôm nay, sắp tới, đã xong.
 enum class TaskSection {
     PREVIOUS,
     TODAY,
@@ -29,19 +30,23 @@ enum class TaskSection {
     COMPLETE
 }
 
+// Một phần tử trong danh sách nhóm: tiêu đề nhóm hoặc dòng task.
 sealed class TaskListItem {
+    // Tiêu đề nhóm kèm số lượng và trạng thái mở/thu gọn.
     data class Header(
         val section: TaskSection,
         val count: Int,
         val expanded: Boolean
     ) : TaskListItem()
 
+    // Một dòng task thuộc nhóm nào.
     data class Row(
         val task: Task,
         val section: TaskSection
     ) : TaskListItem()
 }
 
+// Adapter cho màn Công việc: hiển thị task chia theo nhóm, có thể thu gọn từng nhóm.
 class GroupedTaskAdapter(
     private val onToggleComplete: (String) -> Unit,
     private val onChangeStatus: (String, TaskStatus) -> Unit,
@@ -51,7 +56,9 @@ class GroupedTaskAdapter(
     private val onToggleSection: (TaskSection) -> Unit
 ) : ListAdapter<TaskListItem, RecyclerView.ViewHolder>(Diff) {
 
+    // So sánh phần tử cũ/mới để RecyclerView chỉ vẽ lại phần thay đổi.
     object Diff : DiffUtil.ItemCallback<TaskListItem>() {
+        // Hai tiêu đề cùng nhóm, hoặc hai dòng cùng id task, được coi là cùng một phần tử.
         override fun areItemsTheSame(oldItem: TaskListItem, newItem: TaskListItem): Boolean {
             return when {
                 oldItem is TaskListItem.Header && newItem is TaskListItem.Header ->
@@ -62,18 +69,23 @@ class GroupedTaskAdapter(
             }
         }
 
+        // Nội dung giống hệt thì không cần vẽ lại.
         override fun areContentsTheSame(oldItem: TaskListItem, newItem: TaskListItem): Boolean =
             oldItem == newItem
     }
 
+    // ViewHolder cho tiêu đề nhóm.
     class HeaderVH(val binding: ItemTaskSectionHeaderBinding) : RecyclerView.ViewHolder(binding.root)
+    // ViewHolder cho dòng task.
     class TaskVH(val binding: ItemScheduleTaskBinding) : RecyclerView.ViewHolder(binding.root)
 
+    // Phân biệt dòng tiêu đề và dòng task.
     override fun getItemViewType(position: Int): Int = when (getItem(position)) {
         is TaskListItem.Header -> TYPE_HEADER
         is TaskListItem.Row -> TYPE_TASK
     }
 
+    // Tạo ViewHolder theo loại dòng.
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         return if (viewType == TYPE_HEADER) {
@@ -83,6 +95,7 @@ class GroupedTaskAdapter(
         }
     }
 
+    // Đổ dữ liệu vào dòng tiêu đề hoặc dòng task.
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = getItem(position)) {
             is TaskListItem.Header -> bindHeader(holder as HeaderVH, item)
@@ -90,6 +103,7 @@ class GroupedTaskAdapter(
         }
     }
 
+    // Hiển thị tên nhóm + số lượng; bấm vào để mở/thu gọn nhóm.
     private fun bindHeader(holder: HeaderVH, item: TaskListItem.Header) {
         val title = when (item.section) {
             TaskSection.PREVIOUS -> "Previous"
@@ -102,6 +116,7 @@ class GroupedTaskAdapter(
         holder.binding.root.setOnClickListener { onToggleSection(item.section) }
     }
 
+    // Hiển thị một task: tiêu đề, thời gian, màu theo trạng thái, checkbox và các nút khi vuốt.
     private fun bindTask(holder: TaskVH, item: TaskListItem.Row) {
         val task = item.task
         val b = holder.binding
@@ -151,7 +166,7 @@ class GroupedTaskAdapter(
             doing -> R.color.task_bg_doing to R.color.task_stroke_doing
             notDone || item.section == TaskSection.PREVIOUS ->
                 R.color.task_bg_not_done to R.color.task_stroke_not_done
-            else -> R.color.white to R.color.slate_100
+            else -> R.color.card_bg to R.color.slate_100
         }
         val density = ctx.resources.displayMetrics.density
         b.foregroundCard.background = GradientDrawable().apply {
@@ -189,6 +204,7 @@ class GroupedTaskAdapter(
         }
     }
 
+    // Tạo chuỗi thời gian hiển thị: nhóm Hôm nay chỉ hiện giờ, các nhóm khác hiện cả ngày (MM-dd) và giờ.
     private fun formatSectionMeta(task: Task, section: TaskSection): String? {
         val dayMillis = TaskDateUtils.resolveDueDayMillis(task)
         val time = extractTime(task)
@@ -208,6 +224,7 @@ class GroupedTaskAdapter(
         }
     }
 
+    // Lấy giờ bắt đầu của task dạng HH:mm; không có thì trả về null.
     private fun extractTime(task: Task): String? {
         task.startAtMillis?.let { millis ->
             val cal = Calendar.getInstance().apply { timeInMillis = millis }
@@ -230,6 +247,7 @@ class GroupedTaskAdapter(
         private const val TYPE_TASK = 1
         private val TIME_PATTERN = Pattern.compile("(\\d{1,2}):(\\d{2})")
 
+        // Chia task thành các nhóm (quá hạn, hôm nay, sắp tới, đã xong) và tạo danh sách phần tử để hiển thị.
         fun buildItems(
             tasks: List<Task>,
             expanded: Map<TaskSection, Boolean>

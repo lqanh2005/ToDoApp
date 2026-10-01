@@ -1,34 +1,34 @@
 package com.lqanh.todoandroid.data
 
 import android.content.Context
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 
+// Lớp trung gian giữa ViewModel/Receiver và SQLite: mọi thao tác lưu trữ task đều đi qua đây.
 class TaskRepository(context: Context) {
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    private val gson = Gson()
+    private val dbHelper = TaskDatabaseHelper.getInstance(context)
 
-    fun loadTasks(): List<Task> {
-        val json = prefs.getString(KEY_TASKS, null) ?: return InitialTasks.list
-        return try {
-            val type = object : TypeToken<List<Task>>() {}.type
-            gson.fromJson<List<Task>>(json, type) ?: InitialTasks.list
-        } catch (_: Exception) {
-            InitialTasks.list
-        }
-    }
+    // Lấy toàn bộ task từ SQLite. Nếu đọc lỗi thì trả về dữ liệu mẫu để app vẫn hiển thị được.
+    fun loadTasks(): List<Task> =
+        runCatching { TaskDao.readAll(dbHelper.readableDatabase) }
+            .getOrElse { InitialTasks.list }
 
+    // Lưu lại toàn bộ danh sách task (ghi đè dữ liệu cũ, giữ nguyên thứ tự).
     fun saveTasks(tasks: List<Task>) {
-        prefs.edit().putString(KEY_TASKS, gson.toJson(tasks)).apply()
+        TaskDao.replaceAll(dbHelper.writableDatabase, tasks)
     }
 
+    // Thêm mới hoặc cập nhật một task duy nhất mà không phải ghi lại cả danh sách.
+    fun saveTask(task: Task) {
+        TaskDao.upsert(dbHelper.writableDatabase, task)
+    }
+
+    // Xóa một task khỏi database.
+    fun deleteTask(taskId: String) {
+        TaskDao.delete(dbHelper.writableDatabase, taskId)
+    }
+
+    // Xóa hết dữ liệu hiện tại và nạp lại danh sách task mẫu.
     fun resetTasks(): List<Task> {
         saveTasks(InitialTasks.list)
         return InitialTasks.list
-    }
-
-    companion object {
-        private const val PREFS_NAME = "nhipsang_plan"
-        private const val KEY_TASKS = "nhipsang_plan_tasks_v1"
     }
 }

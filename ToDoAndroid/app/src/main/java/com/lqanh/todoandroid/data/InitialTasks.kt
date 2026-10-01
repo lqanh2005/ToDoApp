@@ -1,5 +1,6 @@
 ﻿package com.lqanh.todoandroid.data
 
+// Các đường dẫn ảnh mẫu dùng trong dữ liệu demo.
 object AppAssets {
     const val PROFILE_AVATAR =
         "https://lh3.googleusercontent.com/aida-public/AB6AXuAxhltLl3G6AlZUvq79RruuPIYeo-EYxEY9Cr3RbErBQimnXFhSQByL-deHVk0P4Is4ELe6FC9K6QUmY5Bf60PteQm4VKS1dZqOg0hrad5uMLe88-8g2g0f9Ehl9VSPU_CYIoanJoP-zsm-HhU9mfwwixcK-SY8F2KIE7YgAqCUTr2BIbEyKVhEXeODKY_RGHHV1E3-nUItjsyYUyYpevM-78ZiFk0OgpnmyXTxqdv0JRSvKzK2KGyDRw"
@@ -11,6 +12,7 @@ object AppAssets {
         "https://lh3.googleusercontent.com/aida-public/AB6AXuD6mbVvzbxCBTO6qm5QFM6Krh3ZaQi4lUpf7Y2fVC7Qi2_3UU8yfr-i7_Bogb0QgDE7mzU8HG5gT1tjhTMpp00O8AfATam-oklPXICI3vfJlX2x6GMReVmd-3rv-dYgfkkKPgD1JnWQzrq5yDp1lXE8ABfDh6OwIhGa6MCgvS3qw6e3rJm0D62sEI2vOE-oGjN13CkCeAIIEJpj7LPHdMdvK7C-9Bx6tJm7q0kTE1PbsxjwXX4AWPIq5A"
 }
 
+// Danh sách task mẫu, được nạp vào database ở lần chạy đầu tiên.
 object InitialTasks {
     val list: List<Task> = listOf(
         Task(

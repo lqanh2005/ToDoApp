@@ -3,7 +3,7 @@
     <style name="ThemeOverlay.ToDo.BottomSheetDialog" parent="ThemeOverlay.Material3.BottomSheetDialog">
         <item name="bottomSheetStyle">@style/Widget.ToDo.BottomSheet.Modal</item>
         <item name="android:windowIsFloating">false</item>
-        <item name="android:navigationBarColor">@color/white</item>
+        <item name="android:navigationBarColor">@color/card_bg</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 

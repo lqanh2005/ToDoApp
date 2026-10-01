@@ -18,6 +18,7 @@ import com.google.android.material.timepicker.TimeFormat
 import com.lqanh.todoandroid.R
 import com.lqanh.todoandroid.databinding.DialogReminderBinding
 
+// Hộp thoại chọn thời điểm nhắc nhở (đúng giờ, 5/15/30 phút, 1 ngày trước hoặc giờ tùy chỉnh).
 class ReminderDialogFragment : DialogFragment() {
 
     private var _binding: DialogReminderBinding? = null
@@ -26,17 +27,20 @@ class ReminderDialogFragment : DialogFragment() {
     private var selectedKey = OPTION_5_MIN
     private var customLabel: String? = null
 
+    // Tạo dialog với nền trong suốt.
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return super.onCreateDialog(savedInstanceState).apply {
             window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         }
     }
 
+    // Tạo view từ layout dialog_reminder.xml.
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = DialogReminderBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    // Đặt kích thước dialog rộng 92% màn hình và căn giữa.
     override fun onStart() {
         super.onStart()
         dialog?.window?.setLayout(
@@ -46,6 +50,7 @@ class ReminderDialogFragment : DialogFragment() {
         dialog?.window?.setGravity(Gravity.CENTER)
     }
 
+    // Khôi phục lựa chọn cũ, gắn sự kiện công tắc/checkbox và gửi kết quả khi bấm Done.
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val enabled = arguments?.getBoolean(ARG_ENABLED, true) != false
         selectedKey = arguments?.getString(ARG_KEY) ?: OPTION_5_MIN
@@ -89,6 +94,7 @@ class ReminderDialogFragment : DialogFragment() {
         }
     }
 
+    // Gắn checkbox sao cho chỉ được chọn một lựa chọn tại một thời điểm.
     private fun bindExclusive(box: MaterialCheckBox, key: String) {
         box.setOnClickListener {
             if (!binding.switchReminder.isChecked) {
@@ -100,6 +106,7 @@ class ReminderDialogFragment : DialogFragment() {
         }
     }
 
+    // Mở đồng hồ để chọn giờ nhắc tùy chỉnh.
     private fun showCustomizePicker() {
         val picker = MaterialTimePicker.Builder()
             .setTimeFormat(TimeFormat.CLOCK_24H)
@@ -116,6 +123,7 @@ class ReminderDialogFragment : DialogFragment() {
         picker.show(parentFragmentManager, "reminder_custom_time")
     }
 
+    // Bật/tắt và làm mờ các lựa chọn theo công tắc nhắc nhở.
     private fun applyEnabledState(enabled: Boolean) {
         binding.reminderOptions.alpha = if (enabled) 1f else 0.45f
         listOf(
@@ -128,6 +136,7 @@ class ReminderDialogFragment : DialogFragment() {
         ).forEach { it.isEnabled = enabled }
     }
 
+    // Cập nhật trạng thái tick và màu chữ theo lựa chọn hiện tại.
     private fun syncChecks() {
         val map = listOf(
             binding.cbAtTaskTime to OPTION_AT_TASK,
@@ -149,6 +158,7 @@ class ReminderDialogFragment : DialogFragment() {
         }
     }
 
+    // Nhãn hiển thị tương ứng với mã lựa chọn.
     private fun displayLabelFor(key: String): String = when (key) {
         OPTION_AT_TASK -> "At task time"
         OPTION_5_MIN -> "5 min"
@@ -159,6 +169,7 @@ class ReminderDialogFragment : DialogFragment() {
         else -> "5 min"
     }
 
+    // Giải phóng binding khi view bị hủy.
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -183,6 +194,7 @@ class ReminderDialogFragment : DialogFragment() {
         private const val ARG_KEY = "arg_key"
         private const val ARG_CUSTOM = "arg_custom"
 
+        // Tạo dialog với trạng thái nhắc nhở hiện tại.
         fun newInstance(enabled: Boolean, key: String?, custom: String?): ReminderDialogFragment {
             return ReminderDialogFragment().apply {
                 arguments = bundleOf(

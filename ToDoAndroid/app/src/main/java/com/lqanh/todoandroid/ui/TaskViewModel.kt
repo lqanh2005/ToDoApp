@@ -5,9 +5,12 @@ import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import androidx.annotation.StringRes
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.lqanh.todoandroid.R
 import com.lqanh.todoandroid.data.NavigationTab
+import com.lqanh.todoandroid.data.SettingsRepository
 import com.lqanh.todoandroid.data.Task
 import com.lqanh.todoandroid.data.TaskDateUtils
 import com.lqanh.todoandroid.data.TaskRepository
@@ -22,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+// Trạng thái giao diện toàn app: danh sách task, tab hiện tại, tìm kiếm, cài đặt rung và task đang mở.
 data class AppUiState(
     val tasks: List<Task> = emptyList(),
     val currentTab: NavigationTab = NavigationTab.CONG_VIEC,
@@ -30,26 +34,33 @@ data class AppUiState(
     val hapticEnabled: Boolean = true,
     val selectedTaskId: String? = null
 ) {
+    // true khi đang mở màn chi tiết task.
     val isChildScreen: Boolean
         get() = selectedTaskId != null
 
-    val headerTitle: String
+    // Chuỗi tiêu đề hiển thị trên header tùy theo màn hình hiện tại.
+    @get:StringRes
+    val headerTitleRes: Int
         get() = when {
-            selectedTaskId != null -> "Task"
-            currentTab == NavigationTab.LICH_TRINH -> "Schedule"
-            else -> "Tasks"
+            selectedTaskId != null -> R.string.header_task
+            currentTab == NavigationTab.LICH_TRINH -> R.string.tab_schedule
+            else -> R.string.tab_tasks
         }
 }
 
+// ViewModel dùng chung cho mọi màn hình: giữ danh sách task, xử lý thao tác người dùng và lưu xuống SQLite.
 class TaskViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = TaskRepository(application)
+    private val settings = SettingsRepository(application)
 
-    private val _uiState = MutableStateFlow(AppUiState())
+    private val _uiState = MutableStateFlow(AppUiState(hapticEnabled = settings.hapticEnabled))
     val uiState: StateFlow<AppUiState> = _uiState.asStateFlow()
 
+    // Luồng sự kiện yêu cầu hiện hộp thoại hỏi "đã hoàn thành chưa" khi task hết giờ.
     private val _completionPrompt = MutableSharedFlow<Task>(extraBufferCapacity = 1)
     val completionPrompt: SharedFlow<Task> = _completionPrompt.asSharedFlow()
 
+    // Khi ViewModel được tạo: đọc task từ SQLite, cập nhật trạng thái theo giờ hiện tại, lưu lại và đặt lịch báo thức.
     init {
         val tasks = syncTimedStatuses(repository.loadTasks())
         repository.saveTasks(tasks)
@@ -57,6 +68,8 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { it.copy(tasks = tasks) }
     }
 
+    // Đọc lại dữ liệu từ SQLite (ví dụ sau khi BroadcastReceiver sửa task lúc app chạy nền)
+    // và hiện hộp thoại hỏi hoàn thành cho các task đã hết giờ.
     fun reloadFromStorage() {
         val tasks = syncTimedStatuses(repository.loadTasks())
         repository.saveTasks(tasks)
@@ -65,6 +78,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         tasks.filter { it.awaitingCompletion }.forEach { _completionPrompt.tryEmit(it) }
     }
 
+    // Ghi danh sách task xuống SQLite và đặt lại lịch báo thức cho các task.
     private fun persist(tasks: List<Task>) {
         viewModelScope.launch {
             repository.saveTasks(tasks)
@@ -72,6 +86,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Tự chuyển trạng thái theo thời gian: đến giờ bắt đầu -> DOING, quá giờ kết thúc -> đánh dấu quá hạn và chờ xác nhận.
     private fun syncTimedStatuses(tasks: List<Task>): List<Task> {
         val now = System.currentTimeMillis()
         return tasks.map { task ->
@@ -94,6 +109,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Rung nhẹ 30ms khi thao tác, chỉ chạy nếu người dùng bật rung trong Cài đặt.
     private fun haptic() {
         if (!_uiState.value.hapticEnabled) return
         val context = getApplication<Application>()
@@ -107,18 +123,28 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         vibrator?.vibrate(VibrationEffect.createOneShot(30, VibrationEffect.DEFAULT_AMPLITUDE))
     }
 
+    // Bật/tắt rung và lưu lựa chọn vào SharedPreferences.
+    fun setHapticEnabled(enabled: Boolean) {
+        settings.hapticEnabled = enabled
+        _uiState.update { it.copy(hapticEnabled = enabled) }
+    }
+
+    // Chuyển tab ở bottom navigation và đóng màn chi tiết nếu đang mở.
     fun selectTab(tab: NavigationTab) {
         _uiState.update { it.copy(currentTab = tab, selectedTaskId = null) }
     }
 
+    // Mở màn chi tiết của một task.
     fun openTaskDetail(taskId: String) {
         _uiState.update { it.copy(selectedTaskId = taskId) }
     }
 
+    // Đóng màn chi tiết, quay về tab đang chọn.
     fun closeChild() {
         _uiState.update { it.copy(selectedTaskId = null) }
     }
 
+    // Thay thế một task bằng phiên bản đã chỉnh sửa rồi lưu lại.
     fun updateTask(task: Task) {
         _uiState.update { state ->
             val tasks = state.tasks.map { if (it.id == task.id) task else it }
@@ -128,6 +154,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Bật/tắt thanh tìm kiếm; khi tắt thì xóa từ khóa.
     fun toggleSearch() {
         _uiState.update {
             val open = !it.isSearchOpen
@@ -135,16 +162,19 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Cập nhật từ khóa tìm kiếm.
     fun setSearchQuery(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
     }
 
+    // Mở hoặc đóng thanh tìm kiếm; khi đóng thì xóa từ khóa.
     fun setSearchOpen(open: Boolean) {
         _uiState.update {
             it.copy(isSearchOpen = open, searchQuery = if (open) it.searchQuery else "")
         }
     }
 
+    // Đảo trạng thái hoàn thành của task (DONE <-> TODO) khi bấm checkbox.
     fun toggleTaskComplete(taskId: String) {
         haptic()
         _uiState.update { state ->
@@ -165,6 +195,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Đặt trạng thái cụ thể cho task (TODO/DOING/DONE).
     fun changeTaskStatus(taskId: String, status: TaskStatus) {
         haptic()
         _uiState.update { state ->
@@ -182,6 +213,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Xử lý câu trả lời của người dùng khi task hết giờ: đã xong -> DONE, chưa xong -> TODO và giữ cờ quá hạn.
     fun resolveCompletion(taskId: String, done: Boolean) {
         haptic()
         _uiState.update { state ->
@@ -199,6 +231,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Cập nhật ngày/giờ/nhắc nhở của task, reset cờ quá hạn và tính lại trạng thái theo thời gian.
     fun updateTaskSchedule(
         taskId: String,
         dueLabel: String,
@@ -228,6 +261,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Thêm task mới vào đầu danh sách rồi lưu lại.
     fun createTask(task: Task) {
         haptic()
         _uiState.update { state ->
@@ -237,6 +271,7 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Xóa task, hủy báo thức liên quan rồi lưu lại.
     fun deleteTask(taskId: String) {
         haptic()
         TaskAlarmScheduler.cancelForTask(getApplication(), taskId)

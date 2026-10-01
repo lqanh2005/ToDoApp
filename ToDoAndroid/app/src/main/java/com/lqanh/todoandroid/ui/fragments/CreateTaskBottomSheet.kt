@@ -40,6 +40,7 @@ import java.util.Date
 import java.util.Locale
 import kotlin.random.Random
 
+// Bottom sheet tạo nhanh task: nhập tiêu đề, chọn danh mục, ngày giờ và thêm việc con.
 class CreateTaskBottomSheet : BottomSheetDialogFragment() {
 
     private var _binding: BottomSheetCreateTaskBinding? = null
@@ -63,8 +64,10 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
     private val subtaskInputs = mutableListOf<EditText>()
     private var categoryPopup: PopupWindow? = null
 
+    // Dùng theme riêng cho bottom sheet (nền trong suốt, bo góc).
     override fun getTheme(): Int = R.style.ThemeOverlay_ToDo_BottomSheetDialog
 
+    // Mở sheet ở trạng thái mở rộng hoàn toàn và tự bật bàn phím vào ô tiêu đề.
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val dialog = super.onCreateDialog(savedInstanceState) as BottomSheetDialog
         dialog.setOnShowListener {
@@ -85,11 +88,13 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         return dialog
     }
 
+    // Tạo view từ layout bottom_sheet_create_task.xml.
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = BottomSheetCreateTaskBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    // Gắn sự kiện các nút và nhận kết quả từ hộp thoại chọn ngày giờ.
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         updateDayLabel()
         updateCategoryLabel()
@@ -138,6 +143,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         updateSubtaskButton()
     }
 
+    // Hiển thị ngày đã chọn trên nút lịch ("—" nếu không có ngày).
     private fun updateDayLabel() {
         val millis = dueMillis
         if (millis == null) {
@@ -149,16 +155,19 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         binding.tvDay.text = cal.get(Calendar.DAY_OF_MONTH).toString()
     }
 
+    // Hiển thị tên danh mục đang chọn.
     private fun updateCategoryLabel() {
         binding.btnCategory.text = categories[categoryIndex].second
     }
 
+    // Chỉ cho bấm nút tạo khi đã nhập tiêu đề.
     private fun updateSubmitEnabled() {
         val enabled = binding.etTitle.text?.toString()?.trim().orEmpty().isNotEmpty()
         binding.btnSubmit.isEnabled = enabled
         binding.btnSubmit.alpha = if (enabled) 1f else 0.45f
     }
 
+    // Hiện popup chọn danh mục phía trên nút danh mục, kèm nút thêm tag mới.
     private fun showCategoryMenu() {
         categoryPopup?.dismiss()
 
@@ -208,6 +217,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         popup.showAsDropDown(binding.btnCategory, 0, yOff, Gravity.START)
     }
 
+    // Hộp thoại nhập tên tag mới và chọn luôn tag đó.
     private fun showAddTagDialog() {
         val input = EditText(requireContext()).apply {
             hint = "Tag name"
@@ -232,12 +242,14 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
             .show()
     }
 
+    // Đổi màu nút việc con và ẩn/hiện vùng việc con.
     private fun updateSubtaskButton() {
         val tint = if (subtaskInputs.isEmpty()) R.color.slate_500 else R.color.primary
         binding.btnSubtask.setColorFilter(ContextCompat.getColor(requireContext(), tint))
         binding.subtaskContainer.isVisible = subtaskInputs.isNotEmpty()
     }
 
+    // Thêm một ô nhập việc con; bấm Next/Done trên bàn phím sẽ thêm ô tiếp theo.
     private fun addInlineSubtask() {
         val row = layoutInflater.inflate(R.layout.item_inline_subtask, binding.subtaskContainer, false)
         val et = row.findViewById<EditText>(R.id.etSubtask)
@@ -267,6 +279,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+    // Gom các ô việc con đã nhập (bỏ ô trống) thành danh sách Subtask.
     private fun collectSubtasks(): List<Subtask> {
         return subtaskInputs.mapIndexedNotNull { index, editText ->
             val text = editText.text?.toString()?.trim().orEmpty()
@@ -278,6 +291,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+    // Mở hộp thoại chọn ngày, giờ và nhắc nhở.
     private fun showDatePicker() {
         if (childFragmentManager.findFragmentByTag(DateScheduleDialogFragment.TAG) != null) return
         DateScheduleDialogFragment
@@ -285,6 +299,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
             .show(childFragmentManager, DateScheduleDialogFragment.TAG)
     }
 
+    // Tạo Task từ dữ liệu đã nhập, gửi cho ViewModel rồi đóng sheet.
     private fun save() {
         val title = binding.etTitle.text?.toString().orEmpty().trim()
         if (title.isEmpty()) {
@@ -335,6 +350,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+    // Tạo nhãn hạn chót dạng "HH:mm · today/Tomorrow/MMM d".
     private fun formatDueLabel(
         millis: Long?,
         withTime: Boolean,
@@ -368,6 +384,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         }
     }
 
+    // Đóng popup đang mở và giải phóng binding.
     override fun onDestroyView() {
         categoryPopup?.dismiss()
         categoryPopup = null

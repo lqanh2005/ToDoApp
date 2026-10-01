@@ -21,6 +21,7 @@ import com.lqanh.todoandroid.R
 import com.lqanh.todoandroid.databinding.DialogSetTimeBinding
 import java.util.Calendar
 
+// Hộp thoại chọn giờ: đồng hồ kim, nhập bằng bàn phím hoặc chọn nhanh các mốc giờ.
 class SetTimeDialogFragment : DialogFragment() {
 
     private var _binding: DialogSetTimeBinding? = null
@@ -33,28 +34,33 @@ class SetTimeDialogFragment : DialogFragment() {
     private var syncing = false
     private var editingHour = true
 
+    // Bọc theme riêng để tùy chỉnh màu đồng hồ TimePicker.
     override fun onGetLayoutInflater(savedInstanceState: Bundle?): LayoutInflater {
         val wrapped = ContextThemeWrapper(requireContext(), R.style.ThemeOverlay_ToDo_TimePickerClock)
         return super.onGetLayoutInflater(savedInstanceState).cloneInContext(wrapped)
     }
 
+    // Tạo dialog với nền trong suốt.
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return super.onCreateDialog(savedInstanceState).apply {
             window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
         }
     }
 
+    // Tạo view từ layout dialog_set_time.xml.
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = DialogSetTimeBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    // Cố định kích thước dialog và căn giữa.
     override fun onStart() {
         super.onStart()
         lockDialogSize()
         dialog?.window?.setGravity(Gravity.CENTER)
     }
 
+    // Khởi tạo giờ ban đầu, gắn sự kiện đồng hồ/bàn phím/chip và gửi kết quả khi bấm Done.
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val hasTime = arguments?.getBoolean(ARG_HAS_TIME) == true
         if (hasTime) {
@@ -184,6 +190,7 @@ class SetTimeDialogFragment : DialogFragment() {
         }
     }
 
+    // Đặt dialog rộng 92% màn hình.
     private fun lockDialogSize() {
         dialog?.window?.setLayout(
             (resources.displayMetrics.widthPixels * 0.92f).toInt(),
@@ -191,6 +198,7 @@ class SetTimeDialogFragment : DialogFragment() {
         )
     }
 
+    // Gắn chip chọn nhanh với một mốc giờ cố định.
     private fun bindPreset(view: View, h: Int, m: Int) {
         view.setOnClickListener {
             noTime = false
@@ -203,12 +211,14 @@ class SetTimeDialogFragment : DialogFragment() {
         }
     }
 
+    // Chuyển qua lại giữa chế độ đồng hồ và nhập bằng bàn phím.
     private fun toggleInputMode() {
         keyboardMode = !keyboardMode
         if (keyboardMode) syncKeyboardFields() else applyTimeToPicker()
         applyInputModeUi()
     }
 
+    // Ẩn/hiện đồng hồ hoặc ô nhập theo chế độ hiện tại.
     private fun applyInputModeUi() {
         binding.timePicker.isVisible = !keyboardMode
         binding.digitalDisplay.isVisible = !keyboardMode
@@ -222,6 +232,7 @@ class SetTimeDialogFragment : DialogFragment() {
         }
     }
 
+    // Đưa giờ/phút hiện tại lên đồng hồ mà không kích hoạt sự kiện thay đổi.
     private fun applyTimeToPicker() {
         val wasSyncing = syncing
         syncing = true
@@ -230,6 +241,7 @@ class SetTimeDialogFragment : DialogFragment() {
         syncing = wasSyncing
     }
 
+    // Đưa giờ/phút hiện tại vào hai ô nhập bàn phím.
     private fun syncKeyboardFields() {
         val wasSyncing = syncing
         syncing = true
@@ -238,6 +250,7 @@ class SetTimeDialogFragment : DialogFragment() {
         syncing = wasSyncing
     }
 
+    // Cập nhật phần hiển thị số HH:mm, tô đậm phần đang chỉnh (giờ hoặc phút).
     private fun refreshDigitalDisplay() {
         binding.tvDigitalHour.text = "%02d".format(hour)
         binding.tvDigitalMinute.text = "%02d".format(minute)
@@ -249,6 +262,7 @@ class SetTimeDialogFragment : DialogFragment() {
         binding.tvDigitalMinute.setTypeface(null, if (editingHour) Typeface.NORMAL else Typeface.BOLD)
     }
 
+    // Đọc (qua reflection) xem đồng hồ đang ở chế độ chọn giờ hay chọn phút.
     private fun syncEditingFromPicker() {
         try {
             val radial = findViewByClassName(binding.timePicker, "RadialTimePickerView") ?: return
@@ -262,6 +276,7 @@ class SetTimeDialogFragment : DialogFragment() {
         }
     }
 
+    // Ép đồng hồ chuyển sang chế độ chọn giờ hoặc chọn phút (qua reflection).
     private fun setPickerShowingHours(showHours: Boolean) {
         try {
             val picker = binding.timePicker
@@ -292,6 +307,7 @@ class SetTimeDialogFragment : DialogFragment() {
         }
     }
 
+    // Tô sáng chip trùng với giờ đang chọn.
     private fun updateChips() {
         val presets = listOf(
             binding.chipNoTime to noTime,
@@ -306,6 +322,7 @@ class SetTimeDialogFragment : DialogFragment() {
         presets.forEach { (chip, selected) -> chip.isSelected = selected }
     }
 
+    // Ẩn phần header mặc định của TimePicker, chỉ giữ lại mặt đồng hồ.
     private fun hideSystemChrome(root: View) {
         val radial = findViewByClassName(root, "RadialTimePickerView") ?: return
 
@@ -339,6 +356,7 @@ class SetTimeDialogFragment : DialogFragment() {
         }
     }
 
+    // Tìm đệ quy view con đầu tiên có tên lớp khớp với simpleName.
     private fun findViewByClassName(root: View, simpleName: String): View? {
         if (root.javaClass.simpleName == simpleName) return root
         if (root is ViewGroup) {
@@ -350,6 +368,7 @@ class SetTimeDialogFragment : DialogFragment() {
         return null
     }
 
+    // Giải phóng binding khi view bị hủy.
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -365,6 +384,7 @@ class SetTimeDialogFragment : DialogFragment() {
         private const val ARG_HOUR = "arg_hour"
         private const val ARG_MINUTE = "arg_minute"
 
+        // Tạo dialog với giờ ban đầu.
         fun newInstance(hasTime: Boolean, hour: Int, minute: Int): SetTimeDialogFragment {
             return SetTimeDialogFragment().apply {
                 arguments = bundleOf(

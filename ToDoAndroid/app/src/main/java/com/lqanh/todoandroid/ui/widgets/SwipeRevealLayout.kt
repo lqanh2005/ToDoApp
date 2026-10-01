@@ -9,6 +9,7 @@ import android.view.ViewConfiguration
 import android.widget.FrameLayout
 import kotlin.math.abs
 
+// Layout cho phép vuốt sang trái để lộ các nút thao tác phía sau (con thứ 1 = nút, con thứ 2 = nội dung).
 class SwipeRevealLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
@@ -29,6 +30,7 @@ class SwipeRevealLayout @JvmOverloads constructor(
         clipToPadding = true
     }
 
+    // Sau khi inflate xong: lấy view nút thao tác và view nội dung.
     override fun onFinishInflate() {
         super.onFinishInflate()
         if (childCount >= 2) {
@@ -39,6 +41,7 @@ class SwipeRevealLayout @JvmOverloads constructor(
         }
     }
 
+    // Đo kích thước: chiều cao theo nội dung, vùng nút rộng theo nội dung của nó.
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val fg = foregroundView
         val actions = actionsView
@@ -57,6 +60,7 @@ class SwipeRevealLayout @JvmOverloads constructor(
         )
     }
 
+    // Đặt nội dung phủ toàn bộ, vùng nút nằm ngay bên phải ngoài màn hình.
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         val w = right - left
         val h = bottom - top
@@ -66,12 +70,14 @@ class SwipeRevealLayout @JvmOverloads constructor(
         applyOffset(contentOffset)
     }
 
+    // Dịch nội dung và vùng nút sang trái một khoảng (giới hạn trong độ rộng vùng nút).
     private fun applyOffset(offset: Float) {
         contentOffset = offset.coerceIn(-actionsWidth, 0f)
         foregroundView?.translationX = contentOffset
         actionsView?.translationX = contentOffset
     }
 
+    // Dịch có hiệu ứng tới vị trí đích.
     private fun animateOffset(target: Float) {
         val from = contentOffset
         val to = target.coerceIn(-actionsWidth, 0f)
@@ -97,11 +103,13 @@ class SwipeRevealLayout @JvmOverloads constructor(
             ?.start()
     }
 
+    // Đóng (trả nội dung về vị trí ban đầu).
     fun close(animate: Boolean = true) {
         if (animate) animateOffset(0f) else applyOffset(0f)
         if (openLayout === this) openLayout = null
     }
 
+    // Mở để lộ nút thao tác; tự đóng dòng khác đang mở.
     fun open(animate: Boolean = true) {
         if (actionsWidth <= 0f) {
             actionsWidth = (actionsView?.measuredWidth ?: 0).toFloat()
@@ -111,8 +119,10 @@ class SwipeRevealLayout @JvmOverloads constructor(
         if (animate) animateOffset(-actionsWidth) else applyOffset(-actionsWidth)
     }
 
+    // Đang mở quá một nửa thì coi là đang mở.
     fun isOpen(): Boolean = contentOffset < -actionsWidth / 2f
 
+    // Chặn sự kiện chạm khi phát hiện người dùng đang vuốt ngang.
     override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
         when (ev.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
@@ -134,6 +144,7 @@ class SwipeRevealLayout @JvmOverloads constructor(
         return dragging
     }
 
+    // Xử lý kéo ngang; khi thả tay thì tự mở hoặc đóng tùy khoảng đã kéo.
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
@@ -177,6 +188,7 @@ class SwipeRevealLayout @JvmOverloads constructor(
     companion object {
         private var openLayout: SwipeRevealLayout? = null
 
+        // Đóng dòng đang mở trong toàn app.
         fun closeOpen() {
             openLayout?.close()
             openLayout = null

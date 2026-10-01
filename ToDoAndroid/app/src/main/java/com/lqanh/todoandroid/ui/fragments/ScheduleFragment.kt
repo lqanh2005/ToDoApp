@@ -28,6 +28,7 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+// Màn hình tab Lịch trình: lịch tháng và danh sách task của ngày được chọn.
 class ScheduleFragment : Fragment() {
 
     private var _binding: FragmentScheduleBinding? = null
@@ -78,11 +79,13 @@ class ScheduleFragment : Fragment() {
 
     private var editingScheduleTaskId: String? = null
 
+    // Tạo view từ layout fragment_schedule.xml.
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentScheduleBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    // Gắn adapter, nút chuyển tháng, nhận kết quả sửa lịch và lắng nghe dữ liệu từ ViewModel.
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding.rvDayTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.rvDayTasks.adapter = adapter
@@ -141,6 +144,7 @@ class ScheduleFragment : Fragment() {
         }
     }
 
+    // Vẽ lưới 42 ô ngày (6 tuần) của tháng đang xem, đánh dấu ngày được chọn và ngày có task.
     private fun renderCalendar() {
         binding.tvMonthYear.text = SimpleDateFormat("MMMM yyyy", Locale.ENGLISH).format(displayMonth.time)
 
@@ -211,6 +215,7 @@ class ScheduleFragment : Fragment() {
         }
     }
 
+    // Hiển thị danh sách task của ngày đang chọn.
     private fun renderDayTasks() {
         val dayTasks = TaskDateUtils.tasksOnDay(allTasks, selectedDayMillis)
         binding.tvSelectedDate.text = SimpleDateFormat("EEEE, MMM d, yyyy", Locale.ENGLISH)
@@ -221,6 +226,7 @@ class ScheduleFragment : Fragment() {
         binding.tvEmptyDay.isVisible = dayTasks.isEmpty()
     }
 
+    // Tạo nhãn hạn chót dạng "HH:mm · today/Tomorrow/MMM d".
     private fun formatScheduleLabel(
         millis: Long?,
         withTime: Boolean,
@@ -250,6 +256,7 @@ class ScheduleFragment : Fragment() {
         return if (withTime) "%02d:%02d · %s".format(hour, minute, datePart) else datePart
     }
 
+    // Giải phóng binding khi view bị hủy.
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

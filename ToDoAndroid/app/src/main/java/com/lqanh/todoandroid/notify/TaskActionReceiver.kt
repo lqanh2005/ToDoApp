@@ -6,28 +6,28 @@ import android.content.Intent
 import com.lqanh.todoandroid.data.TaskRepository
 import com.lqanh.todoandroid.data.TaskStatus
 
+// Xử lý nút "Done"/"Not done" bấm trực tiếp trên thông báo.
 class TaskActionReceiver : BroadcastReceiver() {
+    // Cập nhật trạng thái task theo nút đã bấm, xóa thông báo, hủy báo thức và báo cho app tải lại.
     override fun onReceive(context: Context, intent: Intent?) {
         val taskId = intent?.getStringExtra(TaskNotifier.EXTRA_TASK_ID) ?: return
         val repo = TaskRepository(context)
-        val tasks = repo.loadTasks().map { task ->
-            if (task.id != taskId) task
-            else when (intent.action) {
-                TaskNotifier.ACTION_MARK_DONE -> task.copy(
-                    status = TaskStatus.DONE,
-                    awaitingCompletion = false,
-                    isOverdue = false,
-                    completedAt = "now"
-                )
-                TaskNotifier.ACTION_MARK_NOT_DONE -> task.copy(
-                    status = TaskStatus.TODO,
-                    awaitingCompletion = false,
-                    isOverdue = true
-                )
-                else -> task
-            }
+        val task = repo.loadTasks().firstOrNull { it.id == taskId }
+        val updated = when (intent.action) {
+            TaskNotifier.ACTION_MARK_DONE -> task?.copy(
+                status = TaskStatus.DONE,
+                awaitingCompletion = false,
+                isOverdue = false,
+                completedAt = "now"
+            )
+            TaskNotifier.ACTION_MARK_NOT_DONE -> task?.copy(
+                status = TaskStatus.TODO,
+                awaitingCompletion = false,
+                isOverdue = true
+            )
+            else -> null
         }
-        repo.saveTasks(tasks)
+        updated?.let { repo.saveTask(it) }
         TaskNotifier.cancel(context, taskId)
         TaskAlarmScheduler.cancelForTask(context, taskId)
         context.sendBroadcast(

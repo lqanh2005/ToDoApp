@@ -28,6 +28,7 @@ import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
 
+// Màn hình tab Công việc: tiến độ hôm nay, lọc theo danh mục, tìm kiếm và danh sách task theo nhóm.
 class TasksFragment : Fragment() {
 
     private var _binding: FragmentTasksBinding? = null
@@ -62,11 +63,13 @@ class TasksFragment : Fragment() {
 
     private var editingScheduleTaskId: String? = null
 
+    // Tạo view từ layout fragment_tasks.xml.
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentTasksBinding.inflate(inflater, container, false)
         return binding.root
     }
 
+    // Gắn adapter, sự kiện lọc/tìm kiếm, nhận kết quả sửa lịch và lắng nghe dữ liệu từ ViewModel.
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         binding.rvTasks.layoutManager = LinearLayoutManager(requireContext())
         binding.rvTasks.adapter = adapter
@@ -144,6 +147,7 @@ class TasksFragment : Fragment() {
         }
     }
 
+    // Hộp thoại hỏi task đã hết giờ có hoàn thành chưa.
     private fun showCompletionDialog(task: Task) {
         AlertDialog.Builder(requireContext())
             .setTitle("Task time is up")
@@ -154,6 +158,7 @@ class TasksFragment : Fragment() {
             .show()
     }
 
+    // Mở hộp thoại chọn ngày/giờ để sửa lịch của task.
     private fun showScheduleEditor(task: Task) {
         editingScheduleTaskId = task.id
         if (childFragmentManager.findFragmentByTag(DateScheduleDialogFragment.TAG) != null) return
@@ -165,6 +170,7 @@ class TasksFragment : Fragment() {
             .show(childFragmentManager, DateScheduleDialogFragment.TAG)
     }
 
+    // Tạo nhãn hạn chót dạng "HH:mm · today/Tomorrow/MMM d".
     private fun formatDueLabel(
         millis: Long?,
         withTime: Boolean,
@@ -194,6 +200,7 @@ class TasksFragment : Fragment() {
         return if (withTime) "%02d:%02d · %s".format(hour, minute, datePart) else datePart
     }
 
+    // Cập nhật số lượng task trên từng chip danh mục.
     private fun updateCategoryCounts(tasks: List<Task>) {
         val all = tasks.size
         val work = tasks.count { it.category == "work" }
@@ -207,6 +214,7 @@ class TasksFragment : Fragment() {
         binding.chipShopping.text = "Shopping $shopping"
     }
 
+    // Lọc theo danh mục + từ khóa, sắp xếp, chia nhóm rồi đưa vào adapter.
     private fun refreshList(
         tasks: List<Task> = viewModel.uiState.value.tasks,
         query: String = viewModel.uiState.value.searchQuery
@@ -239,6 +247,7 @@ class TasksFragment : Fragment() {
         binding.rvTasks.isVisible = filtered.isNotEmpty()
     }
 
+    // Giải phóng binding khi view bị hủy để tránh rò rỉ bộ nhớ.
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null

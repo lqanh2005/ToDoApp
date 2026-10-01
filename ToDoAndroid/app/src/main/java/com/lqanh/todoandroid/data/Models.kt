@@ -1,22 +1,28 @@
 package com.lqanh.todoandroid.data
 
+// Trạng thái task: chưa làm, đang làm, đã xong.
 enum class TaskStatus { TODO, DOING, DONE }
 
+// Mức ưu tiên: cao, trung bình, thấp.
 enum class PriorityLevel { CAO, TB, THAP }
 
+// Các tab ở bottom navigation: Công việc và Lịch trình.
 enum class NavigationTab { CONG_VIEC, LICH_TRINH }
 
+// Việc con bên trong một task.
 data class Subtask(
     val id: String,
     val title: String,
     val completed: Boolean = false
 )
 
+// Ảnh đính kèm của task (đường dẫn + chú thích).
 data class TaskImage(
     val url: String,
     val caption: String
 )
 
+// Dữ liệu đầy đủ của một công việc (tiêu đề, trạng thái, danh mục, thời gian, nhắc nhở, việc con...).
 data class Task(
     val id: String,
     val code: String,
