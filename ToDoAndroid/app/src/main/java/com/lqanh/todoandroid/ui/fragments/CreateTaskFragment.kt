@@ -26,10 +26,10 @@ class CreateTaskFragment : Fragment() {
 
     private var timeSlot = "14:30"
     private val categories = listOf(
-        Triple("work", "Work", "💼"),
-        Triple("personal", "Personal", "👤"),
-        Triple("study", "Study", "📚"),
-        Triple("shopping", "Shopping", "🛒")
+        "work" to "Work",
+        "personal" to "Personal",
+        "study" to "Study",
+        "shopping" to "Shopping"
     )
 
     // Tạo view từ layout fragment_create_task.xml.
@@ -44,7 +44,7 @@ class CreateTaskFragment : Fragment() {
         binding.spinnerCategory.adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_dropdown_item,
-            categories.map { "${it.third} ${it.second}" }
+            categories.map { it.second }
         )
 
         binding.btnPickTime.setOnClickListener { showTimePicker() }
@@ -100,7 +100,6 @@ class CreateTaskFragment : Fragment() {
             priority = priority,
             category = cat.first,
             categoryLabel = cat.second,
-            categoryEmoji = cat.third,
             dueDate = dueLabel,
             dueTime = "$timeSlot (${if (dueKey == "today") "Today" else "Upcoming"})",
             reminder = "15",

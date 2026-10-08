@@ -316,14 +316,6 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
                 else -> cat.first
             }
             val categoryLabel = if (cat.first == "none") "Personal" else cat.second
-            val categoryEmoji = when (cat.first) {
-                "work" -> "💼"
-                "personal" -> "👤"
-                "study" -> "📚"
-                "shopping" -> "🛒"
-                else -> "📌"
-            }
-
             val (start, end) = TaskDateUtils.buildStartEnd(dueMillis, hasTime, timeHour, timeMinute)
             val task = Task(
                 id = "task-${System.currentTimeMillis()}",
@@ -334,7 +326,6 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
                 priority = PriorityLevel.TB,
                 category = category,
                 categoryLabel = categoryLabel,
-                categoryEmoji = categoryEmoji,
                 dueDate = dueLabel.ifBlank { "" },
                 dueTime = dueLabel.ifBlank { "" },
                 dueAtMillis = dueMillis?.let { TaskDateUtils.startOfDay(it) },

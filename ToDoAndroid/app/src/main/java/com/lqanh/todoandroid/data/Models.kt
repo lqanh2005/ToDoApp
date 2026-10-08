@@ -33,7 +33,7 @@ data class Task(
     val priority: PriorityLevel = PriorityLevel.TB,
     val category: String = "work",
     val categoryLabel: String = "Work",
-    val categoryEmoji: String? = "💼",
+    val categoryEmoji: String? = null,
     val dueDate: String = "",
     val dueTime: String = "",
     val dueAtMillis: Long? = null,

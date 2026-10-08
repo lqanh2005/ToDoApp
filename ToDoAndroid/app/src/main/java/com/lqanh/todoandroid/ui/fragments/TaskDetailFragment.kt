@@ -48,10 +48,10 @@ class TaskDetailFragment : Fragment() {
     private var categoryPopup: PopupWindow? = null
 
     private val categories = mutableListOf(
-        Triple("work", "Work", "💼"),
-        Triple("personal", "Personal", "👤"),
-        Triple("study", "Study", "📚"),
-        Triple("shopping", "Shopping", "🛒")
+        "work" to "Work",
+        "personal" to "Personal",
+        "study" to "Study",
+        "shopping" to "Shopping"
     )
 
     // Lấy id task được truyền vào qua arguments.
@@ -325,7 +325,7 @@ class TaskDetailFragment : Fragment() {
                     task.copy(
                         category = cat.first,
                         categoryLabel = cat.second,
-                        categoryEmoji = cat.third
+                        categoryEmoji = null
                     )
                 )
                 popup.dismiss()
