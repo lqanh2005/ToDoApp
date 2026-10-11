@@ -19,7 +19,6 @@ import com.lqanh.todoandroid.databinding.ItemScheduleTaskBinding
 import com.lqanh.todoandroid.databinding.ItemTaskBinding
 import com.lqanh.todoandroid.ui.PriorityStyle
 import com.lqanh.todoandroid.ui.widgets.SwipeRevealLayout
-import java.util.Calendar
 import java.util.regex.Pattern
 
 // Adapter hiển thị danh sách task dạng thẻ; scheduleStyle = true dùng giao diện gọn cho màn Lịch trình.
@@ -334,22 +333,19 @@ class TaskAdapter(
         return rem.isNotEmpty() && rem != "0"
     }
 
-    // Lấy giờ bắt đầu của task dạng HH:mm; không có thì trả về null.
+    // Lấy giờ bắt đầu của task theo định dạng giờ trong Cài đặt; không có thì trả về null.
     private fun formatScheduleTime(task: Task): String? {
-        task.startAtMillis?.let { millis ->
-            val cal = Calendar.getInstance().apply { timeInMillis = millis }
-            return "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
-        }
+        task.startAtMillis?.let { return TaskDateUtils.formatClock(it) }
         val raw = task.dueTime.ifBlank { task.dueDate }
         val parsed = TaskDateUtils.parseTimeOfDay(raw)
         if (parsed != null) {
-            return "%02d:%02d".format(parsed.first, parsed.second)
+            return TaskDateUtils.formatClock(parsed.first, parsed.second)
         }
         val matcher = TIME_PATTERN.matcher(raw)
         if (matcher.find()) {
             val hour = matcher.group(1)?.toIntOrNull()
             val minute = matcher.group(2)?.toIntOrNull()
-            if (hour != null && minute != null) return "%02d:%02d".format(hour, minute)
+            if (hour != null && minute != null) return TaskDateUtils.formatClock(hour, minute)
             return matcher.group()
         }
         return null

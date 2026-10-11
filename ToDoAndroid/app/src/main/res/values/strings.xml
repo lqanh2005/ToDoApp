@@ -29,5 +29,10 @@
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_haptic">Vibrate on actions</string>
+    <string name="settings_time_format">Time format</string>
+    <string name="settings_time_24h">24-hour (14:30)</string>
+    <string name="settings_time_12h">12-hour (2:30 PM)</string>
+    <string name="settings_general">General</string>
+    <string name="settings_notifications">Task notifications</string>
     <string name="settings_close">Close</string>
 </resources>

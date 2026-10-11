@@ -12,6 +12,7 @@ import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import com.lqanh.todoandroid.data.PriorityLevel
 import com.lqanh.todoandroid.data.Task
+import com.lqanh.todoandroid.data.TaskDateUtils
 import com.lqanh.todoandroid.data.TaskStatus
 import com.lqanh.todoandroid.databinding.FragmentCreateTaskBinding
 import com.lqanh.todoandroid.ui.TaskViewModel
@@ -40,7 +41,7 @@ class CreateTaskFragment : Fragment() {
 
     // Hiển thị giờ mặc định, nạp danh mục vào spinner và gắn sự kiện nút.
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        binding.tvTime.text = timeSlot
+        binding.tvTime.text = TaskDateUtils.formatClock(14, 30)
         binding.spinnerCategory.adapter = ArrayAdapter(
             requireContext(),
             android.R.layout.simple_spinner_dropdown_item,
@@ -51,19 +52,19 @@ class CreateTaskFragment : Fragment() {
         binding.btnSave.setOnClickListener { save() }
     }
 
-    // Mở đồng hồ chọn giờ (24h).
+    // Mở đồng hồ chọn giờ (12h/24h theo Cài đặt).
     private fun showTimePicker() {
         val hour = timeSlot.substringBefore(":").toIntOrNull() ?: 14
         val minute = timeSlot.substringAfter(":").toIntOrNull() ?: 30
         val picker = MaterialTimePicker.Builder()
-            .setTimeFormat(TimeFormat.CLOCK_24H)
+            .setTimeFormat(if (TaskDateUtils.use24HourClock) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H)
             .setHour(hour)
             .setMinute(minute)
             .setTitleText("Pick a time")
             .build()
         picker.addOnPositiveButtonClickListener {
             timeSlot = "%02d:%02d".format(picker.hour, picker.minute)
-            binding.tvTime.text = timeSlot
+            binding.tvTime.text = TaskDateUtils.formatClock(picker.hour, picker.minute)
         }
         picker.show(parentFragmentManager, "time_picker")
     }

@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.lqanh.todoandroid.MainActivity
 import com.lqanh.todoandroid.R
+import com.lqanh.todoandroid.data.SettingsRepository
 
 // Tạo và quản lý thông báo trạng thái task.
 object TaskNotifier {
@@ -35,6 +36,7 @@ object TaskNotifier {
 
     // Hiện thông báo khi task đến giờ bắt đầu; bấm vào sẽ mở app.
     fun notifyTaskStarted(context: Context, taskId: String, title: String) {
+        if (!SettingsRepository(context).notificationsEnabled) return
         ensureChannel(context)
         val open = PendingIntent.getActivity(
             context,
@@ -55,6 +57,7 @@ object TaskNotifier {
 
     // Hiện thông báo khi task hết giờ, kèm hai nút "Done" và "Not done".
     fun notifyTaskEnded(context: Context, taskId: String, title: String) {
+        if (!SettingsRepository(context).notificationsEnabled) return
         ensureChannel(context)
         val open = PendingIntent.getActivity(
             context,

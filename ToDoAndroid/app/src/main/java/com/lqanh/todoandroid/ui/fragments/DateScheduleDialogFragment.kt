@@ -18,6 +18,8 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
 import com.lqanh.todoandroid.R
+import com.lqanh.todoandroid.data.Task
+import com.lqanh.todoandroid.data.TaskDateUtils
 import com.lqanh.todoandroid.ui.DialogSizing
 import com.lqanh.todoandroid.databinding.DialogDateScheduleBinding
 import java.text.SimpleDateFormat
@@ -70,6 +72,7 @@ class DateScheduleDialogFragment : DialogFragment() {
             startOfDay(displayMonth)
             syncQuickFromSelected()
         }
+        restoreTaskTime()
 
         binding.btnPrevMonth.setOnClickListener {
             displayMonth.add(Calendar.MONTH, -1)
@@ -132,6 +135,26 @@ class DateScheduleDialogFragment : DialogFragment() {
         renderCalendar()
         updateQuickChips()
         updateOptionLabels()
+    }
+
+    // Nạp giờ và nhắc nhở hiện có của task (nếu mở từ forTask) để chỉ đổi ngày thì không mất giờ.
+    private fun restoreTaskTime() {
+        val args = arguments ?: return
+        val h = args.getInt(ARG_HOUR, -1)
+        val m = args.getInt(ARG_MINUTE, -1)
+        if (h !in 0..23 || m !in 0..59) return
+        timeHour = h
+        timeMinute = m
+        val (key, label) = when (args.getString(ARG_REMINDER).orEmpty()) {
+            "5" -> ReminderDialogFragment.OPTION_5_MIN to "5 min"
+            "15" -> ReminderDialogFragment.OPTION_15_MIN to "15 min"
+            "30" -> ReminderDialogFragment.OPTION_30_MIN to "30 min"
+            "1440" -> ReminderDialogFragment.OPTION_1_DAY to "1 day"
+            else -> null to null
+        }
+        reminderKey = key
+        reminder = label
+        reminderManual = true
     }
 
     // Gửi toàn bộ lựa chọn về màn hình gọi rồi đóng dialog.
@@ -396,7 +419,7 @@ class DateScheduleDialogFragment : DialogFragment() {
                 set(Calendar.MILLISECOND, 0)
                 add(Calendar.MINUTE, -offset)
             }
-            return "%02d:%02d".format(
+            return TaskDateUtils.formatClock(
                 cal.get(Calendar.HOUR_OF_DAY),
                 cal.get(Calendar.MINUTE)
             )
@@ -423,8 +446,10 @@ class DateScheduleDialogFragment : DialogFragment() {
 
     // Cập nhật chữ và màu của các dòng Giờ, Nhắc nhở, Lặp lại.
     private fun updateOptionLabels() {
-        if (timeHour != null && timeMinute != null) {
-            binding.tvTimeValue.text = "%02d:%02d".format(timeHour, timeMinute)
+        val h = timeHour
+        val m = timeMinute
+        if (h != null && m != null) {
+            binding.tvTimeValue.text = TaskDateUtils.formatClock(h, m)
             binding.tvTimeValue.setTextColor(ContextCompat.getColor(requireContext(), R.color.slate_700))
         } else {
             binding.tvTimeValue.text = "No"
@@ -471,11 +496,32 @@ class DateScheduleDialogFragment : DialogFragment() {
         const val KEY_REMINDER = "reminder"
         const val KEY_REPEAT = "repeat"
         private const val ARG_INITIAL = "initial"
+        private const val ARG_HOUR = "arg_hour"
+        private const val ARG_MINUTE = "arg_minute"
+        private const val ARG_REMINDER = "arg_reminder"
 
         // Tạo dialog với ngày ban đầu được chọn sẵn.
         fun newInstance(initialMillis: Long): DateScheduleDialogFragment {
             return DateScheduleDialogFragment().apply {
                 arguments = bundleOf(ARG_INITIAL to initialMillis)
+            }
+        }
+
+        // Tạo dialog sửa lịch của task: chọn sẵn ngày, giờ và nhắc nhở hiện tại của task.
+        fun forTask(task: Task): DateScheduleDialogFragment {
+            val initial = task.dueAtMillis
+                ?: TaskDateUtils.resolveDueDayMillis(task)
+                ?: System.currentTimeMillis()
+            val start = TaskDateUtils.resolveStartAtMillis(task)?.let {
+                Calendar.getInstance().apply { timeInMillis = it }
+            }
+            return DateScheduleDialogFragment().apply {
+                arguments = bundleOf(
+                    ARG_INITIAL to initial,
+                    ARG_HOUR to (start?.get(Calendar.HOUR_OF_DAY) ?: -1),
+                    ARG_MINUTE to (start?.get(Calendar.MINUTE) ?: -1),
+                    ARG_REMINDER to task.reminder
+                )
             }
         }
 

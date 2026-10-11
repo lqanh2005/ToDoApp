@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -29,6 +30,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.lqanh.todoandroid.data.NavigationTab
 import com.lqanh.todoandroid.data.SettingsRepository
 import com.lqanh.todoandroid.data.ThemeMode
+import com.lqanh.todoandroid.data.TimeFormat
 import com.lqanh.todoandroid.databinding.ActivityMainBinding
 import com.lqanh.todoandroid.databinding.DialogSettingsBinding
 import com.lqanh.todoandroid.notify.TaskAlarmReceiver
@@ -71,7 +73,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         TaskNotifier.ensureChannel(this)
-        maybeRequestNotificationPermission()
+        if (SettingsRepository(this).notificationsEnabled) maybeRequestNotificationPermission()
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -198,8 +200,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Hộp thoại Cài đặt: chọn giao diện sáng/tối, bật/tắt rung.
-    // Mỗi lựa chọn được lưu ngay vào SharedPreferences rồi áp dụng (đổi theme sẽ tự vẽ lại màn hình).
+    // Hộp thoại Cài đặt: chọn giao diện sáng/tối, định dạng giờ, bật/tắt thông báo và rung.
+    // Mỗi lựa chọn được lưu ngay vào SharedPreferences rồi áp dụng (đổi theme/định dạng giờ sẽ vẽ lại màn hình).
     private fun showSettingsDialog() {
         val settings = SettingsRepository(this)
         val dialogBinding = DialogSettingsBinding.inflate(layoutInflater)
@@ -211,6 +213,13 @@ class MainActivity : AppCompatActivity() {
                 ThemeMode.DARK -> R.id.rbThemeDark
             }
         )
+        dialogBinding.rgTimeFormat.check(
+            when (settings.timeFormat) {
+                TimeFormat.H24 -> R.id.rbTime24
+                TimeFormat.H12 -> R.id.rbTime12
+            }
+        )
+        dialogBinding.switchNotifications.isChecked = settings.notificationsEnabled
         dialogBinding.switchHaptic.isChecked = viewModel.uiState.value.hapticEnabled
 
         val dialog = AlertDialog.Builder(this)
@@ -221,6 +230,19 @@ class MainActivity : AppCompatActivity() {
 
         dialogBinding.switchHaptic.setOnCheckedChangeListener { _, checked ->
             viewModel.setHapticEnabled(checked)
+        }
+        dialogBinding.switchNotifications.setOnCheckedChangeListener { _, checked ->
+            settings.notificationsEnabled = checked
+            if (checked) {
+                maybeRequestNotificationPermission()
+            } else {
+                NotificationManagerCompat.from(this).cancelAll()
+            }
+        }
+        dialogBinding.rgTimeFormat.setOnCheckedChangeListener { _, checkedId ->
+            settings.timeFormat = if (checkedId == R.id.rbTime12) TimeFormat.H12 else TimeFormat.H24
+            dialog.dismiss()
+            recreate()
         }
         dialogBinding.rgTheme.setOnCheckedChangeListener { _, checkedId ->
             val mode = when (checkedId) {

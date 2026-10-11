@@ -15,6 +15,7 @@ import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import com.lqanh.todoandroid.R
+import com.lqanh.todoandroid.data.TaskDateUtils
 import com.lqanh.todoandroid.ui.DialogSizing
 import com.lqanh.todoandroid.databinding.DialogReminderBinding
 
@@ -105,7 +106,7 @@ class ReminderDialogFragment : DialogFragment() {
     // Mở đồng hồ để chọn giờ nhắc tùy chỉnh.
     private fun showCustomizePicker() {
         val picker = MaterialTimePicker.Builder()
-            .setTimeFormat(TimeFormat.CLOCK_24H)
+            .setTimeFormat(if (TaskDateUtils.use24HourClock) TimeFormat.CLOCK_24H else TimeFormat.CLOCK_12H)
             .setHour(9)
             .setMinute(0)
             .setTitleText("Customize time")

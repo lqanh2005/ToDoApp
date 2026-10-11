@@ -7,6 +7,9 @@ import androidx.core.os.LocaleListCompat
 // Chế độ giao diện: theo hệ thống, sáng, tối.
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
+// Định dạng hiển thị giờ: 24 giờ (14:30) hoặc 12 giờ (2:30 PM).
+enum class TimeFormat { H24, H12 }
+
 // Đọc/ghi cài đặt người dùng bằng SharedPreferences.
 class SettingsRepository(context: Context) {
     private val prefs = context.applicationContext
@@ -22,9 +25,23 @@ class SettingsRepository(context: Context) {
         get() = prefs.getBoolean(KEY_HAPTIC, true)
         set(value) = prefs.edit().putBoolean(KEY_HAPTIC, value).apply()
 
-    // Áp dụng theme đã lưu và cố định ngôn ngữ tiếng Anh cho toàn app. Gọi khi app khởi động.
+    // Định dạng giờ đã lưu (mặc định 24 giờ). Đổi giá trị sẽ áp dụng ngay cho các hàm format giờ.
+    var timeFormat: TimeFormat
+        get() = enumOrDefault(prefs.getString(KEY_TIME_FORMAT, null), TimeFormat.H24)
+        set(value) {
+            prefs.edit().putString(KEY_TIME_FORMAT, value.name).apply()
+            TaskDateUtils.use24HourClock = value == TimeFormat.H24
+        }
+
+    // Bật/tắt thông báo khi task bắt đầu/kết thúc (mặc định bật).
+    var notificationsEnabled: Boolean
+        get() = prefs.getBoolean(KEY_NOTIFICATIONS, true)
+        set(value) = prefs.edit().putBoolean(KEY_NOTIFICATIONS, value).apply()
+
+    // Áp dụng theme, định dạng giờ đã lưu và cố định ngôn ngữ tiếng Anh cho toàn app. Gọi khi app khởi động.
     fun applyAll() {
         applyTheme(themeMode)
+        TaskDateUtils.use24HourClock = timeFormat == TimeFormat.H24
         applyEnglish()
     }
 
@@ -32,6 +49,8 @@ class SettingsRepository(context: Context) {
         private const val PREFS_NAME = "app_settings"
         private const val KEY_THEME = "theme_mode"
         private const val KEY_HAPTIC = "haptic_enabled"
+        private const val KEY_TIME_FORMAT = "time_format"
+        private const val KEY_NOTIFICATIONS = "notifications_enabled"
 
         // Chuyển giao diện sáng/tối/theo hệ thống. AppCompat sẽ tự vẽ lại các Activity đang mở.
         fun applyTheme(mode: ThemeMode) {

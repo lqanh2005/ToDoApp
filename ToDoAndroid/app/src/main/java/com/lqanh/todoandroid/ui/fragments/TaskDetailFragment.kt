@@ -119,17 +119,13 @@ class TaskDetailFragment : Fragment() {
                 hour,
                 minute
             )
-            viewModel.updateTask(
-                task.copy(
-                    dueDate = dueLabel,
-                    dueTime = dueLabel,
-                    dueAtMillis = dueAt?.let { TaskDateUtils.startOfDay(it) },
-                    startAtMillis = start,
-                    endAtMillis = end,
-                    reminder = reminderValue,
-                    awaitingCompletion = false,
-                    isOverdue = false
-                )
+            viewModel.updateTaskSchedule(
+                taskId = task.id,
+                dueLabel = dueLabel,
+                dueAtMillis = dueAt?.let { TaskDateUtils.startOfDay(it) },
+                startAtMillis = start,
+                endAtMillis = end,
+                reminder = reminderValue
             )
         }
 
@@ -228,7 +224,7 @@ class TaskDetailFragment : Fragment() {
             binding.tvTime.text = "No"
             binding.reminderDetails.isVisible = false
         } else {
-            binding.tvTime.text = time
+            binding.tvTime.text = TaskDateUtils.formatClock(time.first, time.second)
             val hasReminder = task.reminder.isNotBlank() && task.reminder != "0"
             binding.reminderDetails.isVisible = hasReminder
             if (hasReminder) {
@@ -239,30 +235,27 @@ class TaskDetailFragment : Fragment() {
     }
 
     // Tính giờ nhắc = giờ task trừ số phút nhắc trước.
-    private fun reminderAtLabel(time: String, reminder: String): String {
-        val parts = time.split(":")
-        val hour = parts.getOrNull(0)?.toIntOrNull() ?: return time
-        val minute = parts.getOrNull(1)?.toIntOrNull() ?: return time
+    private fun reminderAtLabel(time: Pair<Int, Int>, reminder: String): String {
         val offset = reminder.filter { it.isDigit() }.toIntOrNull() ?: 5
         val cal = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, hour)
-            set(Calendar.MINUTE, minute)
+            set(Calendar.HOUR_OF_DAY, time.first)
+            set(Calendar.MINUTE, time.second)
             add(Calendar.MINUTE, -offset)
         }
-        return "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+        return TaskDateUtils.formatClock(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
     }
 
-    // Lấy giờ bắt đầu của task dạng HH:mm; không có thì trả về null.
-    private fun extractTime(task: Task): String? {
+    // Lấy giờ bắt đầu của task dạng (giờ, phút); không có thì trả về null.
+    private fun extractTime(task: Task): Pair<Int, Int>? {
         TaskDateUtils.resolveStartAtMillis(task)?.let {
             val cal = Calendar.getInstance().apply { timeInMillis = it }
-            return "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+            return cal.get(Calendar.HOUR_OF_DAY) to cal.get(Calendar.MINUTE)
         }
         val matcher = TIME_PATTERN.matcher("${task.dueTime} ${task.dueDate}")
         if (matcher.find()) {
             val h = matcher.group(1)?.toIntOrNull() ?: return null
             val m = matcher.group(2)?.toIntOrNull() ?: return null
-            return "%02d:%02d".format(h, m)
+            return h to m
         }
         return null
     }
@@ -271,10 +264,7 @@ class TaskDetailFragment : Fragment() {
     private fun openScheduleEditor() {
         val task = current ?: return
         if (childFragmentManager.findFragmentByTag(DateScheduleDialogFragment.TAG) != null) return
-        val initial = task.dueAtMillis
-            ?: TaskDateUtils.resolveDueDayMillis(task)
-            ?: System.currentTimeMillis()
-        DateScheduleDialogFragment.newInstance(initial)
+        DateScheduleDialogFragment.forTask(task)
             .show(childFragmentManager, DateScheduleDialogFragment.TAG)
     }
 

@@ -10,6 +10,25 @@ object TaskDateUtils {
     // Thời lượng mặc định của một task: 1 giờ.
     const val DEFAULT_DURATION_MS = 60L * 60L * 1000L
 
+    // Hiển thị giờ dạng 24h hay 12h; được SettingsRepository cập nhật khi khởi động và khi đổi cài đặt.
+    @Volatile
+    var use24HourClock = true
+
+    // Định dạng giờ:phút để hiển thị theo cài đặt ("14:30" hoặc "2:30 PM").
+    // Chỉ dùng cho hiển thị; nhãn lưu vào task vẫn giữ dạng HH:mm để parseTimeOfDay đọc được.
+    fun formatClock(hour: Int, minute: Int): String {
+        if (use24HourClock) return String.format(Locale.US, "%02d:%02d", hour, minute)
+        val h12 = if (hour % 12 == 0) 12 else hour % 12
+        val suffix = if (hour < 12) "AM" else "PM"
+        return String.format(Locale.US, "%d:%02d %s", h12, minute, suffix)
+    }
+
+    // Định dạng giờ:phút của một thời điểm theo cài đặt.
+    fun formatClock(millis: Long): String {
+        val cal = Calendar.getInstance().apply { timeInMillis = millis }
+        return formatClock(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+    }
+
     // Trả về mốc 00:00:00 của ngày chứa thời điểm millis.
     fun startOfDay(millis: Long = System.currentTimeMillis()): Long {
         return Calendar.getInstance().apply {

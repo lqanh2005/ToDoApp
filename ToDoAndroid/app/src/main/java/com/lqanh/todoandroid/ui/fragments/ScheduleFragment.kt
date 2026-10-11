@@ -66,10 +66,7 @@ class ScheduleFragment : Fragment() {
             onEditSchedule = { task ->
                 editingScheduleTaskId = task.id
                 if (childFragmentManager.findFragmentByTag(DateScheduleDialogFragment.TAG) != null) return@TaskAdapter
-                val initial = task.dueAtMillis
-                    ?: TaskDateUtils.resolveDueDayMillis(task)
-                    ?: System.currentTimeMillis()
-                DateScheduleDialogFragment.newInstance(initial)
+                DateScheduleDialogFragment.forTask(task)
                     .show(childFragmentManager, DateScheduleDialogFragment.TAG)
             },
             onOpenDetail = { viewModel.openTaskDetail(it.id) },

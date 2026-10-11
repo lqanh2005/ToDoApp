@@ -18,7 +18,6 @@ import com.lqanh.todoandroid.databinding.ItemScheduleTaskBinding
 import com.lqanh.todoandroid.databinding.ItemTaskSectionHeaderBinding
 import com.lqanh.todoandroid.ui.PriorityStyle
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.regex.Pattern
@@ -229,20 +228,17 @@ class GroupedTaskAdapter(
         }
     }
 
-    // Lấy giờ bắt đầu của task dạng HH:mm; không có thì trả về null.
+    // Lấy giờ bắt đầu của task theo định dạng giờ trong Cài đặt; không có thì trả về null.
     private fun extractTime(task: Task): String? {
-        task.startAtMillis?.let { millis ->
-            val cal = Calendar.getInstance().apply { timeInMillis = millis }
-            return "%02d:%02d".format(cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
-        }
+        task.startAtMillis?.let { return TaskDateUtils.formatClock(it) }
         val raw = task.dueTime.ifBlank { task.dueDate }
         val parsed = TaskDateUtils.parseTimeOfDay(raw)
-        if (parsed != null) return "%02d:%02d".format(parsed.first, parsed.second)
+        if (parsed != null) return TaskDateUtils.formatClock(parsed.first, parsed.second)
         val matcher = TIME_PATTERN.matcher(raw)
         if (matcher.find()) {
             val h = matcher.group(1)?.toIntOrNull() ?: return null
             val m = matcher.group(2)?.toIntOrNull() ?: return null
-            return "%02d:%02d".format(h, m)
+            return TaskDateUtils.formatClock(h, m)
         }
         return null
     }
