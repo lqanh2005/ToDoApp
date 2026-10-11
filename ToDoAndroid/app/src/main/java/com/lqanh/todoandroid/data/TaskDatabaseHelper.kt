@@ -26,8 +26,12 @@ class TaskDatabaseHelper private constructor(context: Context) :
         TaskDao.replaceAll(db, loadLegacyTasks() ?: InitialTasks.list)
     }
 
-    // Chạy khi tăng DATABASE_VERSION. Hiện chỉ có version 1 nên xóa bảng cũ và tạo lại.
+    // Chạy khi tăng DATABASE_VERSION. Version 2 thêm cột is_starred, giữ nguyên dữ liệu cũ.
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion == 1 && newVersion >= 2) {
+            db.execSQL(TaskContract.SQL_ADD_IS_STARRED)
+            return
+        }
         db.execSQL("DROP TABLE IF EXISTS ${TaskContract.Images.TABLE}")
         db.execSQL("DROP TABLE IF EXISTS ${TaskContract.Subtasks.TABLE}")
         db.execSQL("DROP TABLE IF EXISTS ${TaskContract.Tasks.TABLE}")
@@ -48,7 +52,7 @@ class TaskDatabaseHelper private constructor(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "todo.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
 
         private const val LEGACY_PREFS_NAME = "nhipsang_plan"
         private const val LEGACY_KEY_TASKS = "nhipsang_plan_tasks_v1"

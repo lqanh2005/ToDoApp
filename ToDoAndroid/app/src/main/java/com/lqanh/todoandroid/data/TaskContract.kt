@@ -32,6 +32,7 @@ object TaskContract {
         const val PROGRESS = "progress"
         const val SPEC = "spec"
         const val COMPLETED_AT = "completed_at"
+        const val IS_STARRED = "is_starred"
     }
 
     // Bảng subtasks: việc con, liên kết với tasks qua task_id.
@@ -80,9 +81,13 @@ object TaskContract {
             ${Tasks.REMINDER} TEXT,
             ${Tasks.PROGRESS} INTEGER,
             ${Tasks.SPEC} TEXT,
-            ${Tasks.COMPLETED_AT} TEXT
+            ${Tasks.COMPLETED_AT} TEXT,
+            ${Tasks.IS_STARRED} INTEGER NOT NULL DEFAULT 0
         )
     """
+
+    const val SQL_ADD_IS_STARRED =
+        "ALTER TABLE ${Tasks.TABLE} ADD COLUMN ${Tasks.IS_STARRED} INTEGER NOT NULL DEFAULT 0"
 
     const val SQL_CREATE_SUBTASKS = """
         CREATE TABLE ${Subtasks.TABLE} (

@@ -29,6 +29,8 @@ class TaskAdapter(
     private val onAskCompletion: (Task) -> Unit = {},
     private val onEditSchedule: (Task) -> Unit = {},
     private val onOpenDetail: (Task) -> Unit = {},
+    private val onToggleStar: (String) -> Unit = {},
+    private val onFocus: (Task) -> Unit = {},
     private val scheduleStyle: Boolean = false
 ) : ListAdapter<Task, RecyclerView.ViewHolder>(Diff) {
 
@@ -124,17 +126,19 @@ class TaskAdapter(
         b.btnCheckbox.setOnClickListener { onToggleComplete(task.id) }
         b.foregroundCard.setOnClickListener { onOpenDetail(task) }
 
+        b.ivStar.isVisible = task.isStarred
+        b.tvSwipeStar.text = if (task.isStarred) "Unstar" else "Star"
+        b.btnSwipeStar.setOnClickListener {
+            b.swipeLayout.close()
+            onToggleStar(task.id)
+        }
         b.btnSwipeSchedule.setOnClickListener {
             b.swipeLayout.close()
             onEditSchedule(task)
         }
-        b.btnSwipeDone.setOnClickListener {
+        b.btnSwipeFocus.setOnClickListener {
             b.swipeLayout.close()
-            onChangeStatus(task.id, TaskStatus.DONE)
-        }
-        b.btnSwipeNotDone.setOnClickListener {
-            b.swipeLayout.close()
-            onChangeStatus(task.id, TaskStatus.TODO)
+            onFocus(task)
         }
         b.btnSwipeDelete.setOnClickListener {
             b.swipeLayout.close()
@@ -230,9 +234,13 @@ class TaskAdapter(
                 b.btnStart.setBackgroundResource(R.drawable.bg_status_green)
                 applyStatusTint(b, R.color.status_doing)
             }
+            notDone -> {
+                b.btnStart.setBackgroundResource(R.drawable.bg_status_red)
+                applyStatusTint(b, R.color.status_not_done)
+            }
             else -> {
                 b.btnStart.setBackgroundResource(R.drawable.bg_status_amber)
-                applyStatusTint(b, R.color.status_not_done)
+                applyStatusTint(b, R.color.status_not_started)
             }
         }
 
@@ -242,17 +250,19 @@ class TaskAdapter(
 
         b.foregroundCard.setOnClickListener { onOpenDetail(task) }
 
+        b.ivStar.isVisible = task.isStarred
+        b.tvSwipeStar.text = if (task.isStarred) "Unstar" else "Star"
+        b.btnSwipeStar.setOnClickListener {
+            b.swipeLayout.close()
+            onToggleStar(task.id)
+        }
         b.btnSwipeSchedule.setOnClickListener {
             b.swipeLayout.close()
             onEditSchedule(task)
         }
-        b.btnSwipeDone.setOnClickListener {
+        b.btnSwipeFocus.setOnClickListener {
             b.swipeLayout.close()
-            onChangeStatus(task.id, TaskStatus.DONE)
-        }
-        b.btnSwipeNotDone.setOnClickListener {
-            b.swipeLayout.close()
-            onChangeStatus(task.id, TaskStatus.TODO)
+            onFocus(task)
         }
         b.btnSwipeDelete.setOnClickListener {
             b.swipeLayout.close()

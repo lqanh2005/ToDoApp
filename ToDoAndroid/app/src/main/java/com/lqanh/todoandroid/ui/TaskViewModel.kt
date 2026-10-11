@@ -213,6 +213,18 @@ class TaskViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Bật/tắt đánh dấu sao (task quan trọng).
+    fun toggleStar(taskId: String) {
+        haptic()
+        _uiState.update { state ->
+            val tasks = state.tasks.map {
+                if (it.id == taskId) it.copy(isStarred = !it.isStarred) else it
+            }
+            persist(tasks)
+            state.copy(tasks = tasks)
+        }
+    }
+
     // Xử lý câu trả lời của người dùng khi task hết giờ: đã xong -> DONE, chưa xong -> TODO và giữ cờ quá hạn.
     fun resolveCompletion(taskId: String, done: Boolean) {
         haptic()

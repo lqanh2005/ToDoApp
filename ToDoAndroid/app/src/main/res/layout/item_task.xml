@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.lqanh.todoandroid.ui.widgets.SwipeRevealLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/swipeLayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -12,6 +13,30 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:orientation="horizontal">
+
+        <LinearLayout
+            android:id="@+id/btnSwipeStar"
+            android:layout_width="72dp"
+            android:layout_height="match_parent"
+            android:background="#F59E0B"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_star" />
+
+            <TextView
+                android:id="@+id/tvSwipeStar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Star"
+                android:textColor="@color/white"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/btnSwipeSchedule"
@@ -38,46 +63,23 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/btnSwipeDone"
+            android:id="@+id/btnSwipeFocus"
             android:layout_width="72dp"
             android:layout_height="match_parent"
-            android:background="#22C55E"
+            android:background="#8B5CF6"
             android:gravity="center"
             android:orientation="vertical">
 
             <ImageView
                 android:layout_width="22dp"
                 android:layout_height="22dp"
-                android:src="@drawable/ic_done_white" />
+                android:src="@drawable/ic_timer" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Done"
-                android:textColor="@color/white"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/btnSwipeNotDone"
-            android:layout_width="84dp"
-            android:layout_height="match_parent"
-            android:background="#F59E0B"
-            android:gravity="center"
-            android:orientation="vertical">
-
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_close_white" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Not done"
+                android:text="Focus"
                 android:textColor="@color/white"
                 android:textSize="11sp"
                 android:textStyle="bold" />
@@ -166,6 +168,17 @@
                     android:textColor="@color/on_surface"
                     android:textSize="15sp"
                     android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/ivStar"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_marginTop="3dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_star"
+                    android:visibility="gone"
+                    app:tint="#F59E0B" />
 
                 <LinearLayout
                     android:id="@+id/btnStart"

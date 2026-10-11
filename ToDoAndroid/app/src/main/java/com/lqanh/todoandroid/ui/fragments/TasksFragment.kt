@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -47,13 +46,11 @@ class TasksFragment : Fragment() {
     private val adapter by lazy {
         GroupedTaskAdapter(
             onToggleComplete = { viewModel.toggleTaskComplete(it) },
-            onChangeStatus = { id, status ->
-                if (status == TaskStatus.TODO) viewModel.resolveCompletion(id, false)
-                else viewModel.changeTaskStatus(id, status)
-            },
             onDelete = { viewModel.deleteTask(it) },
             onEditSchedule = { showScheduleEditor(it) },
             onOpenDetail = { viewModel.openTaskDetail(it.id) },
+            onToggleStar = { viewModel.toggleStar(it) },
+            onFocus = { showFocusTimer(it) },
             onToggleSection = { section ->
                 expandedSections[section] = !(expandedSections[section] ?: true)
                 refreshList()
@@ -123,11 +120,6 @@ class TasksFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                launch {
-                    viewModel.completionPrompt.collect { task ->
-                        if (isAdded) showCompletionDialog(task)
-                    }
-                }
                 viewModel.uiState.collect { state ->
                     binding.searchBar.isVisible = state.isSearchOpen
                     if (state.isSearchOpen && binding.etSearch.text?.toString() != state.searchQuery) {
@@ -147,17 +139,6 @@ class TasksFragment : Fragment() {
         }
     }
 
-    // Hộp thoại hỏi task đã hết giờ có hoàn thành chưa.
-    private fun showCompletionDialog(task: Task) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Task time is up")
-            .setMessage("\"${task.title}\" has ended.\nHave you completed it?")
-            .setPositiveButton("Done") { _, _ -> viewModel.resolveCompletion(task.id, true) }
-            .setNegativeButton("Not done") { _, _ -> viewModel.resolveCompletion(task.id, false) }
-            .setNeutralButton("Later", null)
-            .show()
-    }
-
     // Mở hộp thoại chọn ngày/giờ để sửa lịch của task.
     private fun showScheduleEditor(task: Task) {
         editingScheduleTaskId = task.id
@@ -168,6 +149,13 @@ class TasksFragment : Fragment() {
         DateScheduleDialogFragment
             .newInstance(initial)
             .show(childFragmentManager, DateScheduleDialogFragment.TAG)
+    }
+
+    // Mở hộp thoại đếm giờ tập trung cho task.
+    private fun showFocusTimer(task: Task) {
+        if (childFragmentManager.findFragmentByTag(FocusTimerDialogFragment.TAG) != null) return
+        FocusTimerDialogFragment.newInstance(task.id, task.title)
+            .show(childFragmentManager, FocusTimerDialogFragment.TAG)
     }
 
     // Tạo nhãn hạn chót dạng "HH:mm · today/Tomorrow/MMM d".

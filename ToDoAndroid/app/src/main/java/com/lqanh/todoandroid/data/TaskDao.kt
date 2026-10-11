@@ -45,7 +45,8 @@ object TaskDao {
                     progress = c.intOrNull(Tasks.PROGRESS),
                     images = imagesByTask[id],
                     spec = c.stringOrNull(Tasks.SPEC),
-                    completedAt = c.stringOrNull(Tasks.COMPLETED_AT)
+                    completedAt = c.stringOrNull(Tasks.COMPLETED_AT),
+                    isStarred = c.bool(Tasks.IS_STARRED)
                 )
             }
         }
@@ -136,6 +137,7 @@ object TaskDao {
         put(Tasks.PROGRESS, task.progress)
         put(Tasks.SPEC, task.spec)
         put(Tasks.COMPLETED_AT, task.completedAt)
+        put(Tasks.IS_STARRED, if (task.isStarred) 1 else 0)
     }
 
     // Đọc tất cả việc con và nhóm theo task_id.

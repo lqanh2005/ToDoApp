@@ -18,6 +18,7 @@ import androidx.core.os.bundleOf
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
 import com.lqanh.todoandroid.R
+import com.lqanh.todoandroid.ui.DialogSizing
 import com.lqanh.todoandroid.databinding.DialogDateScheduleBinding
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -57,11 +58,7 @@ class DateScheduleDialogFragment : DialogFragment() {
     // Đặt kích thước dialog rộng 92% màn hình và căn giữa.
     override fun onStart() {
         super.onStart()
-        dialog?.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.92f).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        dialog?.window?.setGravity(Gravity.CENTER)
+        DialogSizing.apply(dialog)
     }
 
     // Khởi tạo ngày ban đầu, gắn sự kiện và nhận kết quả từ hộp thoại chọn giờ/nhắc nhở.
@@ -229,16 +226,16 @@ class DateScheduleDialogFragment : DialogFragment() {
         }
         val startOffset = first.get(Calendar.DAY_OF_WEEK) - Calendar.SUNDAY
         val cursor = (first.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, -startOffset) }
-        val cellSize = ((resources.displayMetrics.widthPixels * 0.92f) - (32 * resources.displayMetrics.density)) / 7f
+        val cellSize = calendarCellSize()
 
         repeat(42) {
             val dayCal = cursor.clone() as Calendar
             val cell = layoutInflater.inflate(R.layout.item_calendar_day, binding.gridDays, false) as TextView
             cell.layoutParams = GridLayout.LayoutParams().apply {
-                width = 0
-                height = cellSize.toInt()
-                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
-                rowSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+                width = cellSize
+                height = cellSize
+                columnSpec = GridLayout.spec(GridLayout.UNDEFINED, GridLayout.CENTER, 1f)
+                rowSpec = GridLayout.spec(GridLayout.UNDEFINED)
             }
             cell.text = dayCal.get(Calendar.DAY_OF_MONTH).toString()
 
@@ -275,6 +272,14 @@ class DateScheduleDialogFragment : DialogFragment() {
             binding.gridDays.addView(cell)
             cursor.add(Calendar.DAY_OF_YEAR, 1)
         }
+    }
+
+    // Cạnh của mỗi ô ngày: vừa 7 cột theo chiều rộng hộp thoại, không quá 6% chiều cao màn hình và không quá 44dp.
+    private fun calendarCellSize(): Int {
+        val metrics = resources.displayMetrics
+        val byWidth = (DialogSizing.dialogWidthPx(requireContext()) - 32 * metrics.density) / 7f
+        val byHeight = metrics.heightPixels * 0.06f
+        return minOf(byWidth, byHeight, 44 * metrics.density).toInt()
     }
 
     // Mở hộp thoại chọn giờ.

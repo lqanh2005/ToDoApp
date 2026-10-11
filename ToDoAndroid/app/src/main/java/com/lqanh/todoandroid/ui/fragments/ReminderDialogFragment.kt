@@ -4,7 +4,6 @@ import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -16,6 +15,7 @@ import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat
 import com.lqanh.todoandroid.R
+import com.lqanh.todoandroid.ui.DialogSizing
 import com.lqanh.todoandroid.databinding.DialogReminderBinding
 
 // Hộp thoại chọn thời điểm nhắc nhở (đúng giờ, 5/15/30 phút, 1 ngày trước hoặc giờ tùy chỉnh).
@@ -43,11 +43,7 @@ class ReminderDialogFragment : DialogFragment() {
     // Đặt kích thước dialog rộng 92% màn hình và căn giữa.
     override fun onStart() {
         super.onStart()
-        dialog?.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.92f).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        dialog?.window?.setGravity(Gravity.CENTER)
+        DialogSizing.apply(dialog)
     }
 
     // Khôi phục lựa chọn cũ, gắn sự kiện công tắc/checkbox và gửi kết quả khi bấm Done.

@@ -21,8 +21,8 @@
 
     <color name="task_bg_done">#14301F</color>
     <color name="task_stroke_done">#166534</color>
-    <color name="task_bg_not_done">#3A2A0B</color>
-    <color name="task_stroke_not_done">#92400E</color>
+    <color name="task_bg_not_done">#3A1515</color>
+    <color name="task_stroke_not_done">#991B1B</color>
     <color name="task_bg_doing">#0F3029</color>
     <color name="task_stroke_doing">#047857</color>
 

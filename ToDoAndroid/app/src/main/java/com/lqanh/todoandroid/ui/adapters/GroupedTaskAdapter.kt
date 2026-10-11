@@ -49,10 +49,11 @@ sealed class TaskListItem {
 // Adapter cho màn Công việc: hiển thị task chia theo nhóm, có thể thu gọn từng nhóm.
 class GroupedTaskAdapter(
     private val onToggleComplete: (String) -> Unit,
-    private val onChangeStatus: (String, TaskStatus) -> Unit,
     private val onDelete: (String) -> Unit,
     private val onEditSchedule: (Task) -> Unit = {},
     private val onOpenDetail: (Task) -> Unit = {},
+    private val onToggleStar: (String) -> Unit = {},
+    private val onFocus: (Task) -> Unit = {},
     private val onToggleSection: (TaskSection) -> Unit
 ) : ListAdapter<TaskListItem, RecyclerView.ViewHolder>(Diff) {
 
@@ -186,17 +187,19 @@ class GroupedTaskAdapter(
         b.btnCheckbox.setOnClickListener { onToggleComplete(task.id) }
         b.foregroundCard.setOnClickListener { onOpenDetail(task) }
 
+        b.ivStar.isVisible = task.isStarred
+        b.tvSwipeStar.text = if (task.isStarred) "Unstar" else "Star"
+        b.btnSwipeStar.setOnClickListener {
+            b.swipeLayout.close()
+            onToggleStar(task.id)
+        }
         b.btnSwipeSchedule.setOnClickListener {
             b.swipeLayout.close()
             onEditSchedule(task)
         }
-        b.btnSwipeDone.setOnClickListener {
+        b.btnSwipeFocus.setOnClickListener {
             b.swipeLayout.close()
-            onChangeStatus(task.id, TaskStatus.DONE)
-        }
-        b.btnSwipeNotDone.setOnClickListener {
-            b.swipeLayout.close()
-            onChangeStatus(task.id, TaskStatus.TODO)
+            onFocus(task)
         }
         b.btnSwipeDelete.setOnClickListener {
             b.swipeLayout.close()

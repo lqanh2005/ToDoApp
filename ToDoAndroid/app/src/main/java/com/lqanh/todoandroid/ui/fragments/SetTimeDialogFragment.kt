@@ -6,7 +6,6 @@ import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.view.ContextThemeWrapper
-import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -18,6 +17,7 @@ import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.setFragmentResult
 import com.lqanh.todoandroid.R
+import com.lqanh.todoandroid.ui.DialogSizing
 import com.lqanh.todoandroid.databinding.DialogSetTimeBinding
 import java.util.Calendar
 
@@ -57,7 +57,6 @@ class SetTimeDialogFragment : DialogFragment() {
     override fun onStart() {
         super.onStart()
         lockDialogSize()
-        dialog?.window?.setGravity(Gravity.CENTER)
     }
 
     // Khởi tạo giờ ban đầu, gắn sự kiện đồng hồ/bàn phím/chip và gửi kết quả khi bấm Done.
@@ -75,6 +74,7 @@ class SetTimeDialogFragment : DialogFragment() {
         }
 
         binding.root.alpha = 0f
+        fitClockToScreen()
         syncing = true
         binding.timePicker.setIs24HourView(true)
         applyTimeToPicker()
@@ -190,12 +190,18 @@ class SetTimeDialogFragment : DialogFragment() {
         }
     }
 
-    // Đặt dialog rộng 92% màn hình.
+    // Đặt kích thước dialog theo màn hình (rộng tối đa 480dp, cao tối đa 90% màn hình) và căn giữa.
     private fun lockDialogSize() {
-        dialog?.window?.setLayout(
-            (resources.displayMetrics.widthPixels * 0.92f).toInt(),
-            ViewGroup.LayoutParams.WRAP_CONTENT
-        )
+        DialogSizing.apply(dialog)
+    }
+
+    // Thu nhỏ vùng đồng hồ trên màn hình thấp: cao 280dp nhưng không quá 38% chiều cao màn hình.
+    private fun fitClockToScreen() {
+        val metrics = resources.displayMetrics
+        val height = minOf(280f * metrics.density, metrics.heightPixels * 0.38f).toInt()
+        binding.clockContainer.layoutParams = binding.clockContainer.layoutParams.apply {
+            this.height = height
+        }
     }
 
     // Gắn chip chọn nhanh với một mốc giờ cố định.

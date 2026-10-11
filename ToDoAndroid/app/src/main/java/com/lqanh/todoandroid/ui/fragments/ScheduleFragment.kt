@@ -73,6 +73,12 @@ class ScheduleFragment : Fragment() {
                     .show(childFragmentManager, DateScheduleDialogFragment.TAG)
             },
             onOpenDetail = { viewModel.openTaskDetail(it.id) },
+            onToggleStar = { viewModel.toggleStar(it) },
+            onFocus = { task ->
+                if (childFragmentManager.findFragmentByTag(FocusTimerDialogFragment.TAG) != null) return@TaskAdapter
+                FocusTimerDialogFragment.newInstance(task.id, task.title)
+                    .show(childFragmentManager, FocusTimerDialogFragment.TAG)
+            },
             scheduleStyle = true
         )
     }

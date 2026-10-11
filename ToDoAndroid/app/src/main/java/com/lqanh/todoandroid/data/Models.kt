@@ -50,5 +50,6 @@ data class Task(
     val progress: Int? = null,
     val images: List<TaskImage>? = null,
     val spec: String? = null,
-    val completedAt: String? = null
+    val completedAt: String? = null,
+    val isStarred: Boolean = false
 )
