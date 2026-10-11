@@ -17,6 +17,7 @@ import com.lqanh.todoandroid.data.TaskDateUtils
 import com.lqanh.todoandroid.data.TaskStatus
 import com.lqanh.todoandroid.databinding.ItemScheduleTaskBinding
 import com.lqanh.todoandroid.databinding.ItemTaskBinding
+import com.lqanh.todoandroid.ui.PriorityStyle
 import com.lqanh.todoandroid.ui.widgets.SwipeRevealLayout
 import java.util.Calendar
 import java.util.regex.Pattern
@@ -127,6 +128,7 @@ class TaskAdapter(
         b.foregroundCard.setOnClickListener { onOpenDetail(task) }
 
         b.ivStar.isVisible = task.isStarred
+        b.ivFlag.setColorFilter(PriorityStyle.color(task.priority))
         b.tvSwipeStar.text = if (task.isStarred) "Unstar" else "Star"
         b.btnSwipeStar.setOnClickListener {
             b.swipeLayout.close()

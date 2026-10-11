@@ -124,6 +124,15 @@
                 android:contentDescription="Sub-Task"
                 android:padding="8dp"
                 android:src="@drawable/ic_subtask" />
+
+            <ImageButton
+                android:id="@+id/btnPriority"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Priority"
+                android:padding="8dp"
+                android:src="@drawable/ic_flag" />
         </LinearLayout>
 
         <ImageButton

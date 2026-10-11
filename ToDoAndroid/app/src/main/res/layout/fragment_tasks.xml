@@ -157,7 +157,39 @@
                         android:text="Shopping" />
                 </com.google.android.material.chip.ChipGroup>
             </HorizontalScrollView>
+
+            <ImageButton
+                android:id="@+id/btnFilterPriority"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Filter by priority"
+                android:padding="9dp"
+                android:src="@drawable/ic_flag" />
+
+            <ImageButton
+                android:id="@+id/btnSort"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/sort_tasks"
+                android:padding="8dp"
+                android:src="@drawable/ic_swap_vert" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvActiveFilter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_category_chip"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp"
+            android:textColor="@color/slate_700"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvTasks"
@@ -174,7 +206,7 @@
             android:background="@drawable/bg_task_card"
             android:gravity="center"
             android:padding="32dp"
-            android:text="No tasks in this category"
+            android:text="No matching tasks"
             android:textColor="@color/on_surface_variant"
             android:visibility="gone" />
     </LinearLayout>

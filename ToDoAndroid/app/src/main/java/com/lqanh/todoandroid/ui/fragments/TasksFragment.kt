@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.PopupMenu
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.fragment.app.Fragment
@@ -18,6 +20,7 @@ import com.lqanh.todoandroid.data.Task
 import com.lqanh.todoandroid.data.TaskDateUtils
 import com.lqanh.todoandroid.data.TaskStatus
 import com.lqanh.todoandroid.databinding.FragmentTasksBinding
+import com.lqanh.todoandroid.ui.PriorityStyle
 import com.lqanh.todoandroid.ui.TaskViewModel
 import com.lqanh.todoandroid.ui.adapters.GroupedTaskAdapter
 import com.lqanh.todoandroid.ui.adapters.TaskSection
@@ -35,7 +38,8 @@ class TasksFragment : Fragment() {
     private val viewModel: TaskViewModel by activityViewModels()
 
     private var category = "all"
-    private var sortMode = 0
+    private var priorityFilter: PriorityLevel? = null
+    private var sortMode = SORT_PRIORITY_HIGH
     private val expandedSections = mutableMapOf(
         TaskSection.PREVIOUS to true,
         TaskSection.TODAY to true,
@@ -114,6 +118,15 @@ class TasksFragment : Fragment() {
             }
             refreshList()
         }
+
+        binding.btnFilterPriority.setOnClickListener { showPriorityFilterMenu() }
+        binding.btnSort.setOnClickListener { showSortMenu() }
+        binding.tvActiveFilter.setOnClickListener {
+            priorityFilter = null
+            updateFilterIndicators()
+            refreshList()
+        }
+        updateFilterIndicators()
 
         binding.btnCloseSearch.setOnClickListener { viewModel.setSearchOpen(false) }
         binding.etSearch.doAfterTextChanged { viewModel.setSearchQuery(it?.toString().orEmpty()) }
@@ -202,14 +215,74 @@ class TasksFragment : Fragment() {
         binding.chipShopping.text = "Shopping $shopping"
     }
 
-    // Lọc theo danh mục + từ khóa, sắp xếp, chia nhóm rồi đưa vào adapter.
+    // Menu lọc theo mức ưu tiên: All, High, Medium, Low.
+    private fun showPriorityFilterMenu() {
+        PopupMenu(requireContext(), binding.btnFilterPriority).apply {
+            menu.add(0, FILTER_ALL, 0, "All priorities").apply {
+                isCheckable = true
+                isChecked = priorityFilter == null
+            }
+            PriorityStyle.ordered.forEachIndexed { index, level ->
+                menu.add(0, index, index + 1, PriorityStyle.label(level)).apply {
+                    isCheckable = true
+                    isChecked = priorityFilter == level
+                }
+            }
+            menu.setGroupCheckable(0, true, true)
+            setOnMenuItemClickListener { item ->
+                priorityFilter = if (item.itemId == FILTER_ALL) null else PriorityStyle.ordered[item.itemId]
+                updateFilterIndicators()
+                refreshList()
+                true
+            }
+            show()
+        }
+    }
+
+    // Menu chọn cách sắp xếp danh sách.
+    private fun showSortMenu() {
+        PopupMenu(requireContext(), binding.btnSort).apply {
+            SORT_LABELS.forEachIndexed { index, label ->
+                menu.add(0, index, index, label).apply {
+                    isCheckable = true
+                    isChecked = sortMode == index
+                }
+            }
+            menu.setGroupCheckable(0, true, true)
+            setOnMenuItemClickListener { item ->
+                sortMode = item.itemId
+                updateFilterIndicators()
+                refreshList()
+                true
+            }
+            show()
+        }
+    }
+
+    // Tô màu nút lọc theo mức đang lọc và hiện nhãn bộ lọc/sắp xếp đang áp dụng (bấm nhãn để bỏ lọc).
+    private fun updateFilterIndicators() {
+        val filter = priorityFilter
+        val idle = ContextCompat.getColor(requireContext(), R.color.slate_500)
+        binding.btnFilterPriority.setColorFilter(filter?.let { PriorityStyle.color(it) } ?: idle)
+        binding.btnSort.setColorFilter(
+            if (sortMode == SORT_PRIORITY_HIGH) idle
+            else ContextCompat.getColor(requireContext(), R.color.primary)
+        )
+        binding.tvActiveFilter.isVisible = filter != null
+        if (filter != null) {
+            binding.tvActiveFilter.text = "${PriorityStyle.label(filter)} priority  ✕"
+            binding.tvActiveFilter.setTextColor(PriorityStyle.color(filter))
+        }
+    }
+
+    // Lọc theo danh mục + mức ưu tiên + từ khóa, sắp xếp, chia nhóm rồi đưa vào adapter.
     private fun refreshList(
         tasks: List<Task> = viewModel.uiState.value.tasks,
         query: String = viewModel.uiState.value.searchQuery
     ) {
-        val priorityScore = mapOf(PriorityLevel.CAO to 3, PriorityLevel.TB to 2, PriorityLevel.THAP to 1)
         val filtered = tasks
             .filter { category == "all" || it.category == category }
+            .filter { priorityFilter == null || it.priority == priorityFilter }
             .filter {
                 if (query.isBlank()) true
                 else {
@@ -221,11 +294,15 @@ class TasksFragment : Fragment() {
             }
             .sortedWith(
                 when (sortMode) {
-                    1 -> compareBy { it.dueTime }
-                    2 -> compareByDescending { it.id }
-                    3 -> compareBy { it.id }
-                    4 -> compareBy { it.title }
-                    else -> compareByDescending { priorityScore[it.priority] ?: 0 }
+                    SORT_PRIORITY_LOW -> compareBy<Task> { PriorityStyle.score(it.priority) }
+                        .thenBy(nullsLast()) { TaskDateUtils.resolveStartAtMillis(it) }
+                    SORT_DUE_TIME -> compareBy<Task, Long?>(nullsLast()) {
+                        TaskDateUtils.resolveStartAtMillis(it) ?: TaskDateUtils.resolveDueDayMillis(it)
+                    }
+                    SORT_NEWEST -> compareByDescending { it.id }
+                    SORT_NAME -> compareBy { it.title.lowercase() }
+                    else -> compareByDescending<Task> { PriorityStyle.score(it.priority) }
+                        .thenBy(nullsLast()) { TaskDateUtils.resolveStartAtMillis(it) }
                 }
             )
 
@@ -239,5 +316,23 @@ class TasksFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    companion object {
+        private const val FILTER_ALL = 100
+
+        private const val SORT_PRIORITY_HIGH = 0
+        private const val SORT_PRIORITY_LOW = 1
+        private const val SORT_DUE_TIME = 2
+        private const val SORT_NEWEST = 3
+        private const val SORT_NAME = 4
+
+        private val SORT_LABELS = listOf(
+            "Priority: High → Low",
+            "Priority: Low → High",
+            "Due time",
+            "Newest first",
+            "Name A–Z"
+        )
     }
 }

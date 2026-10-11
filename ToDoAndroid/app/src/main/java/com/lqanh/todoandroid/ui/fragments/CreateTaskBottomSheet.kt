@@ -15,6 +15,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.Toast
@@ -33,6 +34,7 @@ import com.lqanh.todoandroid.data.Task
 import com.lqanh.todoandroid.data.TaskDateUtils
 import com.lqanh.todoandroid.data.TaskStatus
 import com.lqanh.todoandroid.databinding.BottomSheetCreateTaskBinding
+import com.lqanh.todoandroid.ui.PriorityStyle
 import com.lqanh.todoandroid.ui.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -61,6 +63,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
     private var timeHour = 0
     private var timeMinute = 0
     private var reminderValue = "15"
+    private var priority = PriorityLevel.TB
     private val subtaskInputs = mutableListOf<EditText>()
     private var categoryPopup: PopupWindow? = null
 
@@ -136,6 +139,8 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
         binding.btnCategory.setOnClickListener { showCategoryMenu() }
         binding.btnDate.setOnClickListener { showDatePicker() }
         binding.btnSubtask.setOnClickListener { addInlineSubtask() }
+        binding.btnPriority.setOnClickListener { showPriorityMenu() }
+        updatePriorityButton()
         binding.btnMic.setOnClickListener {
             Toast.makeText(requireContext(), "Voice input coming soon", Toast.LENGTH_SHORT).show()
         }
@@ -242,6 +247,31 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
             .show()
     }
 
+    // Menu chọn mức ưu tiên (High/Medium/Low), mục đang chọn được tick.
+    private fun showPriorityMenu() {
+        PopupMenu(requireContext(), binding.btnPriority).apply {
+            PriorityStyle.ordered.forEachIndexed { index, level ->
+                menu.add(0, index, index, PriorityStyle.label(level)).apply {
+                    isCheckable = true
+                    isChecked = level == priority
+                }
+            }
+            menu.setGroupCheckable(0, true, true)
+            setOnMenuItemClickListener { item ->
+                priority = PriorityStyle.ordered[item.itemId]
+                updatePriorityButton()
+                true
+            }
+            show()
+        }
+    }
+
+    // Tô màu cờ theo mức ưu tiên đang chọn.
+    private fun updatePriorityButton() {
+        binding.btnPriority.setColorFilter(PriorityStyle.color(priority))
+        binding.btnPriority.contentDescription = "Priority: ${PriorityStyle.label(priority)}"
+    }
+
     // Đổi màu nút việc con và ẩn/hiện vùng việc con.
     private fun updateSubtaskButton() {
         val tint = if (subtaskInputs.isEmpty()) R.color.slate_500 else R.color.primary
@@ -323,7 +353,7 @@ class CreateTaskBottomSheet : BottomSheetDialogFragment() {
                 title = title,
                 description = null,
                 status = TaskStatus.TODO,
-                priority = PriorityLevel.TB,
+                priority = priority,
                 category = category,
                 categoryLabel = categoryLabel,
                 dueDate = dueLabel.ifBlank { "" },
