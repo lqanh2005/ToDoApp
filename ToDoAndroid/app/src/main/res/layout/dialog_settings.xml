@@ -42,39 +42,6 @@
                 android:text="@string/settings_theme_dark" />
         </RadioGroup>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:text="@string/settings_language"
-            android:textColor="@color/primary"
-            android:textSize="13sp"
-            android:textStyle="bold" />
-
-        <RadioGroup
-            android:id="@+id/rgLanguage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <RadioButton
-                android:id="@+id/rbLangSystem"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_language_system" />
-
-            <RadioButton
-                android:id="@+id/rbLangVi"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_language_vi" />
-
-            <RadioButton
-                android:id="@+id/rbLangEn"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/settings_language_en" />
-        </RadioGroup>
-
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/switchHaptic"
             android:layout_width="match_parent"

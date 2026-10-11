@@ -28,7 +28,8 @@ class TaskRepository(context: Context) {
 
     // Xóa hết dữ liệu hiện tại và nạp lại danh sách task mẫu.
     fun resetTasks(): List<Task> {
-        saveTasks(InitialTasks.list)
-        return InitialTasks.list
+        val tasks = InitialTasks.list
+        saveTasks(tasks)
+        return tasks
     }
 }

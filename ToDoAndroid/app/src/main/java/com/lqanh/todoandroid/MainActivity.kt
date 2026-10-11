@@ -26,7 +26,6 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.lqanh.todoandroid.data.AppLanguage
 import com.lqanh.todoandroid.data.NavigationTab
 import com.lqanh.todoandroid.data.SettingsRepository
 import com.lqanh.todoandroid.data.ThemeMode
@@ -199,8 +198,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Hộp thoại Cài đặt: chọn giao diện sáng/tối, ngôn ngữ, bật/tắt rung.
-    // Mỗi lựa chọn được lưu ngay vào SharedPreferences rồi áp dụng (đổi theme/ngôn ngữ sẽ tự vẽ lại màn hình).
+    // Hộp thoại Cài đặt: chọn giao diện sáng/tối, bật/tắt rung.
+    // Mỗi lựa chọn được lưu ngay vào SharedPreferences rồi áp dụng (đổi theme sẽ tự vẽ lại màn hình).
     private fun showSettingsDialog() {
         val settings = SettingsRepository(this)
         val dialogBinding = DialogSettingsBinding.inflate(layoutInflater)
@@ -210,13 +209,6 @@ class MainActivity : AppCompatActivity() {
                 ThemeMode.SYSTEM -> R.id.rbThemeSystem
                 ThemeMode.LIGHT -> R.id.rbThemeLight
                 ThemeMode.DARK -> R.id.rbThemeDark
-            }
-        )
-        dialogBinding.rgLanguage.check(
-            when (settings.language) {
-                AppLanguage.SYSTEM -> R.id.rbLangSystem
-                AppLanguage.VIETNAMESE -> R.id.rbLangVi
-                AppLanguage.ENGLISH -> R.id.rbLangEn
             }
         )
         dialogBinding.switchHaptic.isChecked = viewModel.uiState.value.hapticEnabled
@@ -240,17 +232,6 @@ class MainActivity : AppCompatActivity() {
             dialog.dismiss()
             SettingsRepository.applyTheme(mode)
         }
-        dialogBinding.rgLanguage.setOnCheckedChangeListener { _, checkedId ->
-            val language = when (checkedId) {
-                R.id.rbLangVi -> AppLanguage.VIETNAMESE
-                R.id.rbLangEn -> AppLanguage.ENGLISH
-                else -> AppLanguage.SYSTEM
-            }
-            settings.language = language
-            dialog.dismiss()
-            SettingsRepository.applyLanguage(language)
-        }
-
         dialog.show()
     }
 
