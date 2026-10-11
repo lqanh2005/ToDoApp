@@ -3,6 +3,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="card_bg">#FFFFFFFF</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
 
     <color name="primary">#2563EB</color>
     <color name="primary_container">#2563EB</color>

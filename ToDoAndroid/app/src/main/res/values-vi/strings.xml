@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Life Rhythm Plan</string>
-    <string name="brand_name">Life Rhythm Plan</string>
+    <string name="app_name">To-do List</string>
+    <string name="brand_name">To-do List</string>
     <string name="tab_tasks">Công việc</string>
     <string name="tab_schedule">Lịch trình</string>
     <string name="header_task">Chi tiết</string>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Life Rhythm Plan</string>
-    <string name="brand_name">Life Rhythm Plan</string>
+    <string name="app_name">To-do List</string>
+    <string name="brand_name">To-do List</string>
     <string name="tab_tasks">Tasks</string>
     <string name="tab_schedule">Schedule</string>
     <string name="header_task">Task</string>
